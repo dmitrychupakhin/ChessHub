@@ -1,0 +1,12 @@
+{% extends "account/account-base.html" %}
+
+{% block form %}
+<div class="errors-login">{{ form.non_field_errors.as_ul }}</div>
+<form id="form" autocomplete="off" method="post">
+    {% csrf_token %}
+    {{ form.username }}
+    {{ form.password }}
+    <button class="input-button" type="submit">Login</button>
+</form>
+<a class="link" href="{% url 'register' %}">Don't have a account? Sign Up</a>
+{% endblock form %}

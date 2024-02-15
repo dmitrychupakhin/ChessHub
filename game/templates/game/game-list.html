@@ -12,7 +12,7 @@
 {% block content %}
 <div class="content" id="content">
     <div class="picture-wrapper">
-        <img src="{% static '/game/img/meme1.png' %}" class="wP" alt="">
+        <img src="{% static '/game/img/meme1.png' %}" class="meme1" alt="">
     </div>
     <div class="rooms-wrapper" id="rooms-wrapper">
         <div class="title">Games</div>
@@ -72,7 +72,7 @@
             document.getElementById(data.game_id).remove();
             if ('{{ user.username }}' === data.black_user || '{{ user.username }}' === data.white_user) {
                 newRoom(data.game_id, true, true);
-                window.location.replace(`/game/${data.room_id}/`);
+                window.location.replace(`/game/${data.game_id}/`);
             }
         }
         else if (data.type === 'remove-game') {
@@ -84,9 +84,12 @@
             }
         }
         else if (data.type === 'new-game') {
-            document.getElementById('current-room-wrapper').style.display = 'grid';
-            document.getElementById('content').style.gridTemplateAreas = '"chat current-room" "chat rooms" "chat rooms"';
-            document.getElementById('new-room-wrapper').style.display = 'none';
+            if (data.white_user == '{{ user.username }}') {
+                document.getElementById('current-room-wrapper').style.display = 'grid';
+                document.getElementById('content').style.gridTemplateAreas = '"chat current-room" "chat rooms" "chat rooms"';
+                document.getElementById('new-room-wrapper').style.display = 'none';
+            }
+
             newRoom(data.game_id, false, data.white_user === '{{ user.username }}' ? true : false);
         }
         else if (data.type === 'game-list') {
@@ -145,7 +148,6 @@
             });
             document.getElementById('current-room-wrapper').appendChild(roomElement);
             roomButtonElement.textContent = "Leave";
-            roomButtonElement.style.backgroundColor = "rgb(218,69,83)";
         }
         else {
             var roomsWrapper = document.getElementById('rooms-wrapper');

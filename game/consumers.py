@@ -154,7 +154,7 @@ class HomeConsumer(AsyncWebsocketConsumer):
                 'home',
                 {
                     'type': 'start_game',
-                    'game_id': game_id,
+                    'game_id': chess_game.pk,
                     'white_user': white_user.username,
                     'black_user': black_user.username,
                 }

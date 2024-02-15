@@ -1,0 +1,203 @@
+{% extends "game/game-base.html" %}
+{% load static %}
+
+{% block head %}
+<link type="text/css" href="{% static 'game/css/game-base.css' %}" rel="stylesheet">
+<link type="text/css" href="{% static 'game/css/game-list.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
+    integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous">
+<title>ChessHub</title>
+{% endblock head %}
+
+{% block content %}
+<div class="content" id="content">
+    <div class="picture-wrapper">
+        <img src="{% static '/game/img/meme1.png' %}" class="wP" alt="">
+    </div>
+    <div class="rooms-wrapper" id="rooms-wrapper">
+        <div class="title">Games</div>
+    </div>
+
+    <div class="current-room-wrapper" id="current-room-wrapper">
+        <div class="title">My Game</div>
+    </div>
+
+    <div class="new-room-wrapper" id="new-room-wrapper">
+        <div class="new-room-title title">New Game</div>
+        <div class="game-time">
+            <div class="game-time-text">Minutes per side: </div>
+            <div id="game-time-value" class="buy-in-value">1</div>
+        </div>
+        <input class="range" type="range" id="game-time-slider" min="1" max="180" step="1" value="0">
+        <div class="step-time">
+            <div class="step-time-text">Increment in seconds: </div>
+            <div id="step-time-value" class="limits-value">0</div>
+        </div>
+        <input class="range" type="range" id="step-time-slider" min="0" max="180" step="1" value="0">
+        <div class="user-limits">
+            <label class="user-limit" id="public-label">
+                <input class="radio-button" type="radio" name="public" checked>
+                Public
+            </label>
+            <label class="user-limit">
+                <input class="radio-button" type="radio" name="public">
+                Private
+            </label>
+        </div>
+        <button class="new-room-button" id="new-room-button" onclick="createNewGame()">Create</button>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"
+    integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD"
+    crossorigin="anonymous"></script>
+<script>
+
+    const socket = new WebSocket(`ws://${window.location.host}/ws/home/`);
+
+    socket.onopen = (event) => {
+        console.log('WebSocket connection opened:', event);
+        var data = {
+            type: 'game-list',
+        };
+        socket.send(JSON.stringify(data));
+    };
+
+    socket.onmessage = (event) => {
+        console.log(event.data);
+        var data = JSON.parse(event.data);
+        if (data.type === 'error') {
+        }
+        else if (data.type === 'start-game') {
+            document.getElementById(data.game_id).remove();
+            if ('{{ user.username }}' === data.black_user || '{{ user.username }}' === data.white_user) {
+                newRoom(data.game_id, true, true);
+                window.location.replace(`/game/${data.room_id}/`);
+            }
+        }
+        else if (data.type === 'remove-game') {
+            document.getElementById(data.game_id).remove();
+            if (data.white_user == '{{ user.username }}') {
+                document.getElementById('current-room-wrapper').style.display = 'none';
+                document.getElementById('new-room-wrapper').style.display = 'flex';
+                document.getElementById('content').style.gridTemplateAreas = '"chat new-room" "chat rooms" "chat rooms"';
+            }
+        }
+        else if (data.type === 'new-game') {
+            document.getElementById('current-room-wrapper').style.display = 'grid';
+            document.getElementById('content').style.gridTemplateAreas = '"chat current-room" "chat rooms" "chat rooms"';
+            document.getElementById('new-room-wrapper').style.display = 'none';
+            newRoom(data.game_id, false, data.white_user === '{{ user.username }}' ? true : false);
+        }
+        else if (data.type === 'game-list') {
+            var current_games = data.current_games;
+            var open_games = data.open_games;
+
+            if (current_games.length) {
+                document.getElementById('current-room-wrapper').style.display = 'grid';
+                document.getElementById('content').style.gridTemplateAreas = '"chat current-room" "chat rooms" "chat rooms"';
+                document.getElementById('new-room-wrapper').style.display = 'none';
+                for (let i = 0; i < current_games.length; i++) {
+
+                    newRoom(current_games[i].game_id, current_games[i].is_started, current_games[i].white_user === '{{ user.username }}' ? true : false);
+                }
+            }
+            else {
+                document.getElementById('new-room-wrapper').style.display = 'flex';
+                document.getElementById('content').style.gridTemplateAreas = '"chat new-room" "chat rooms" "chat rooms"';
+            }
+            for (let i = 0; i < open_games.length; i++) {
+                newRoom(open_games[i].game_id, open_games[i].isStarted, open_games[i].white_user === '{{ user.username }}' ? true : false);
+            }
+        }
+    }
+    socket.onclose = function (event) {
+        console.log('WebSocket connection closed:', event);
+    };
+
+    function newRoom(roomId, isStarted, isOwner) {
+        var roomElement = document.createElement('div');
+        roomElement.classList.add('room');
+        roomElement.id = roomId;
+
+        var roomTitleElement = document.createElement('div');
+        roomTitleElement.classList.add('room-title');
+        roomTitleElement.textContent = roomId;
+
+        var roomButtonElement = document.createElement('button');
+        roomButtonElement.classList.add('room-button');
+        roomButtonElement.textContent = 'Join';
+
+        roomElement.appendChild(roomTitleElement);
+        roomElement.appendChild(roomButtonElement);
+        if (isStarted) {
+
+            roomButtonElement.addEventListener('click', connect);
+
+            document.getElementById('current-room-wrapper').appendChild(roomElement);
+            roomButtonElement.textContent = "Сonnect";
+            roomButtonElement.style.backgroundColor = "rgb(218,69,83)";
+            roomButtonElement.classList.add('joined');
+        }
+        else if (isOwner) {
+            roomButtonElement.addEventListener('click', function () {
+                leaveRoom(roomId);
+            });
+            document.getElementById('current-room-wrapper').appendChild(roomElement);
+            roomButtonElement.textContent = "Leave";
+            roomButtonElement.style.backgroundColor = "rgb(218,69,83)";
+        }
+        else {
+            var roomsWrapper = document.getElementById('rooms-wrapper');
+            roomsWrapper.appendChild(roomElement);
+            roomButtonElement.addEventListener('click', function () {
+                joinRoom(roomId);
+            });
+        }
+    }
+    function connect(event) {
+        var room_id = event.target.parentNode.id;
+        window.location.replace(`/game/${room_id}/`);
+    }
+    function joinRoom(game_id) {
+        var data = {
+            type: 'join-game',
+            game_id: game_id,
+        };
+        socket.send(JSON.stringify(data));
+    }
+
+    function leaveRoom(game_id) {
+        var data = {
+            type: 'leave-game',
+            game_id: game_id,
+        };
+        socket.send(JSON.stringify(data));
+    }
+
+    function createNewGame() {
+        const game_time = document.getElementById('game-time-slider').value;
+        const step_time = document.getElementById('step-time-slider').value;
+        const publicRadioButton = document.getElementById('public-label').querySelector('input:checked');
+        const is_public = publicRadioButton ? 1 : 0;
+        var data = {
+            type: 'new-game',
+            game_time: game_time,
+            step_time: step_time,
+            is_public: is_public,
+        };
+        socket.send(JSON.stringify(data));
+    }
+
+    var gameTimeSlider = document.getElementById('game-time-slider');
+    var stepTimeSlider = document.getElementById('step-time-slider');
+    gameTimeSlider.addEventListener('input', (event) => {
+        const selectedValue = event.target.value;
+        document.getElementById('game-time-value').textContent = selectedValue;
+    });
+    stepTimeSlider.addEventListener('input', (event) => {
+        const selectedValue = event.target.value;
+        document.getElementById('step-time-value').textContent = selectedValue;
+    });
+</script>
+{% endblock content %}

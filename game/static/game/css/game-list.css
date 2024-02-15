@@ -1,0 +1,190 @@
+.content {
+    font-family: 'Open Sans', sans-serif;
+    display: grid;
+        grid-template-columns: 1fr 1fr;
+            grid-template-rows: 0fr 1fr;
+            grid-template-areas: "chat rooms"
+                "chat rooms"
+                "chat rooms";
+    grid-gap: 20px;
+    font-size: 40px;
+    height: 100%;
+    padding: 3% 15%;
+    overflow: hidden;
+}
+
+@media only screen and (max-width: 1500px) {
+    .content {
+        font-family: 'Open Sans', sans-serif;
+        display: grid;
+            grid-template-columns: 1fr 1fr;
+                grid-template-rows: 0fr 1fr;
+                grid-template-areas: "chat rooms"
+                    "chat rooms"
+                    "chat rooms";
+        grid-gap: 20px;
+        font-size: 40px;
+        height: 100%;
+        padding: 3% 2%;
+        overflow: hidden;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+@media only screen and (max-width: 900px) {
+    .content {
+        font-family: 'Open Sans', sans-serif;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr;
+        grid-template-areas: "chat rooms"
+                    "chat rooms"
+                    "chat rooms";
+        grid-gap: 20px;
+        font-size: 40px;
+        padding: 3% 2%;
+        overflow: auto;
+        align-items: center;
+        justify-content: center;
+
+    }
+}
+
+.current-room-wrapper,
+.rooms-wrapper,
+.new-room-wrapper,
+.picture-wrapper {
+    padding: 10px;
+    border-radius: 4px;
+        color: rgb(248, 238, 225);
+}
+
+
+.current-room-wrapper {
+    display: none;
+    grid-area: current-room;
+}
+
+.rooms-wrapper {
+    box-shadow: 4px 4px 0px rgb(227, 122, 105);
+    background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
+    grid-area: rooms;
+}
+
+.room {
+    display: grid;
+    grid-template-columns: 0fr 1fr 0fr 0fr;
+    grid-template-areas: "room-title room-images owner-button room-button";
+    align-items: center;
+    font-size: 30px;
+    grid-gap: 20px;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.room-title {
+    grid-area: room-title;
+}
+
+.room-user-images {
+    grid-area: room-images;
+}
+
+.room-button {
+    grid-area: room-button;
+}
+
+.owner-button {
+    grid-area: owner-button;
+}
+
+.room-button,
+.owner-button {
+    background-color: rgb(251, 164, 115);
+    box-shadow: 3px 3px 0px rgb(229, 229, 229);
+    color: white;
+    border-radius: 7px;
+    font-weight: 700;
+    font-size: 25px;
+    padding: 5px 40px;
+}
+
+.room-input {
+    font-size: 20px;
+}
+
+.new-room-wrapper {
+    background: linear-gradient(to bottom right, rgb(52, 98, 160), rgb(26, 67, 121));
+    box-shadow: 4px 4px 0px rgb(35, 68, 110);
+    grid-area: new-room;
+    display: none;
+    flex-direction: column;
+    border-radius: 0px;
+}
+
+.title {
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+.game-time,
+.step-time {
+    font-size: 25px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.step-time {
+    font-size: 20px;
+}
+
+.range {
+    margin-bottom: 10px;
+}
+
+.radio-button {
+    height: 17px;
+    width: 17px;
+    border-radius: 0px;
+}
+
+.user-limits {
+    font-size: 25px;
+    margin-bottom: 10px;
+}
+
+.new-room-button {
+    background-color: rgb(251, 164, 115);
+    box-shadow: 3px 3px 0px rgb(211, 135, 91);
+    color: white;
+    border-radius: 7px;
+    font-weight: 700;
+    font-size: 25px;
+    width: 250px;
+    padding: 5px 0px;
+    margin-bottom: 15px;
+}
+
+.picture-wrapper {
+    background-color: rgb(255, 134, 113);
+    box-shadow: 4px 4px 0px rgb(227, 122, 105);
+    background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
+    aspect-ratio: 1;
+    display: grid;
+    grid-area: chat;
+}
+
+.message {
+    font-size: 20px;
+}
+
+.room-user-image {
+    height: 50px;
+    width: 50px;
+    border-radius: 100%;
+    box-shadow: 3px 3px 0px rgb(229, 229, 229);
+    margin-right: 10px;
+}
+

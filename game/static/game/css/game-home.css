@@ -1,0 +1,131 @@
+.content {
+    font-family: 'Open Sans', sans-serif;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    grid-template-areas: "board menu";
+    grid-gap: 20px;
+    font-size: 40px;
+    height: 100%;
+    padding: 3% 15%;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+}
+
+@media only screen and (max-width: 1500px) {
+    .content {
+            font-family: 'Open Sans', sans-serif;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            
+                grid-template-areas: "board menu";
+                grid-gap: 20px;
+                font-size: 40px;
+                height: 100%;
+                padding: 3% 2%;
+                overflow: hidden;
+                align-items: center;
+                justify-content: center;
+        }
+}
+
+@media only screen and (max-width: 900px) {
+    .content {
+        font-family: 'Open Sans', sans-serif;
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+        grid-template-areas: "menu""board";
+        grid-gap: 20px;
+        font-size: 40px;
+        padding: 3% 2%;
+        overflow: auto;
+        align-items: center;
+        justify-content: center;
+
+    }
+}
+
+
+
+.menu-wrapper{
+    grid-area: menu;
+    display: grid;
+    margin: 20% 0px;
+    grid-template-rows: 3fr 1fr 1fr;
+    grid-gap: 10px;
+}
+
+.title{
+    color: rgb(248, 238, 225);
+    font-family: 'Open Sans', sans-serif;
+    font-size: 50px;
+    font-weight: 900;
+    text-align: center;
+}
+
+.highlight1-32417,
+.highlight2-9c5d2 {
+    box-shadow: inset 0 0 0px 3px rgb(248, 238, 225) !important;
+}
+
+.wP{
+    height: 50px;
+    width: 50px;
+    transform: rotate(30deg);
+}
+
+
+.menu-button{
+    font-size: 25px;
+    border-radius: 4px;
+    color:rgb(248, 238, 225) ;
+    font-weight: 800;
+    background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
+    box-shadow: 4px 4px 0px rgb(35, 68, 110);
+    padding: 20px;
+}
+
+.online-button {
+    background: linear-gradient(to right, rgb(239, 104, 80), rgb(220, 82, 58));
+    box-shadow: 4px 4px 0px rgb(183, 101, 54);
+}
+
+.chess-board-wrapper {
+    padding: 10px;
+    border-radius: 4px;
+    color: rgb(248, 238, 225);
+    aspect-ratio: 1;
+}
+
+#myBoard .board-b72b1 {
+    border: none;
+    margin: auto;
+}
+
+#myBoard .black-3c85d {
+    background-color: rgb(52, 98, 160);
+    background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
+}
+
+#myBoard .white-1e1d7 {
+    background-color: rgb(248, 238, 225);
+}
+
+.new-room-wrapper {
+    background: linear-gradient(to bottom right, rgb(52, 98, 160), rgb(26, 67, 121));
+    box-shadow: 4px 4px 0px rgb(35, 68, 110);
+    grid-area: new-room;
+    display: none;
+    flex-direction: column;
+    border-radius: 0px;
+}
+
+.chess-board-wrapper {
+    background-color: rgb(255, 134, 113);
+    box-shadow: 4px 4px 0px rgb(227, 122, 105);
+    background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
+    display: grid;
+    grid-area: board;
+}

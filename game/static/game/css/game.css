@@ -1,0 +1,48 @@
+.content{
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    grid-template-areas: "board-wrapper";
+    grid-gap: 20px;
+    font-family: 'Open Sans', sans-serif;
+    padding: 20px 15%;
+    overflow: hidden;
+}
+
+.chess-board-wrapper, .chat{
+    padding: 10px;
+}
+.chess-board-wrapper{
+    aspect-ratio: 1;
+    grid-area: board-wrapper;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    box-shadow: 3px 3px 0px rgb(229, 229, 229);
+    overflow: hidden;
+}
+
+.chat{
+    display: none;
+    min-width: 300px;
+    grid-area: chat;
+    height: 100%;
+    background-color: white;
+    box-shadow: 3px 3px 0px rgb(229, 229, 229);
+}
+
+.img{
+    height: 400px;
+    width: 400px;
+}
+
+.display-text{
+    font-size: 20px;
+}
+
+.chess-board {
+    height: 100%;
+    width: 100%;
+}

@@ -1,0 +1,177 @@
+{% extends "game/game-base.html" %}
+{% load static %}
+
+{% block head %}
+<link type="text/css" href="{% static 'game/css/game-base.css' %}" rel="stylesheet">
+<link type="text/css" href="{% static 'game/css/game-home.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
+    integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous">
+<title>ChessHub</title>
+{% endblock head %}
+
+{% block content %}
+<div class="content" id="content">
+
+    <div class="chess-board-wrapper">
+        <div id="myBoard" class="chess-board">
+
+        </div>
+
+    </div>
+
+    <div class="menu-wrapper" id="rooms-wrapper">
+        <div class="title">Unleash <span style="color: rgb(119, 153, 84);">Y</span>our Inner Grandmaster with
+            <span style="color: rgb(52, 98, 160);">C</span>hess<span style="color: rgb(239, 104, 80);">H</span>ab!<img
+                src="{% static '/game/img/chesspieces/wikipedia/wP.png' %}" class="wP" alt="">
+        </div>
+        <button id="play-online" class="menu-button online-button">Play Online</button>
+        <button id="play-computer" class="menu-button">Play Computer</button>
+    </div>
+
+</div>
+<script src="{% static 'game/js/chess.js' %}"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"
+    integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD"
+    crossorigin="anonymous"></script>
+<script>
+
+    var b1 = document.getElementById('play-online');
+    b1.addEventListener('click', function () {
+        // Осуществляем переход на другую страницу
+        window.location.href = "{% url 'game-list' %}"
+    });
+
+    var board = null
+    var game = new Chess()
+    var whiteSquareGrey = '#a9a9a9'
+    var blackSquareGrey = '#696969'
+    var flipped = false;
+
+    function removeGreySquares() {
+        $('#myBoard .square-55d63').css('background', '')
+    }
+
+    function greySquare(square) {
+        var $square = $('#myBoard .square-' + square)
+
+        var background = whiteSquareGrey
+        if ($square.hasClass('black-3c85d')) {
+            background = blackSquareGrey
+        }
+
+        $square.css('background', background)
+    }
+
+    function flipBoard() {
+        flipped = !flipped;
+        board.orientation(flipped ? 'black' : 'white');
+    }
+
+    function onDragStart(source, piece) {
+        // do not pick up pieces if the game is over
+        if (game.game_over()) return false
+
+        // or if it's not that side's turn
+        if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+            (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+            return false
+        }
+        highlightSquare(source, 'orange');
+    }
+
+    function highlightSquare(square, color) {
+        var squareEl = $('#myBoard .square-' + square);
+
+        // Ваш код для изменения цвета подсветки
+        squareEl.css('swadow-color', color);
+    }
+
+    function onDrop(source, target) {
+        removeGreySquares()
+
+        // see if the move is legal
+        var move = game.move({
+            from: source,
+            to: target,
+            promotion: 'q' // NOTE: always promote to a queen for example simplicity
+        })
+
+        // illegal move
+        if (move === null) return 'snapback'
+        setTimeout(function () {
+            // Check if the game is over (checkmate)
+            if (game.in_checkmate()) {
+                var winner = game.turn() === 'w' ? 'Black' : 'White';
+                alert("Checkmate!" + winner + " wins!");
+                game.reset();
+                board.position('start');
+            } else {
+                // Toggle board orientation after each move
+                flipBoard();
+            }
+        }, 150);
+    }
+
+    function onMouseoverSquare(square, piece) {
+        // get list of possible moves for this square
+        var moves = game.moves({
+            square: square,
+            verbose: true
+        })
+
+        // exit if there are no moves available for this square
+        if (moves.length === 0) return
+
+        // highlight the square they moused over
+        greySquare(square)
+
+        // highlight the possible squares for this piece
+        for (var i = 0; i < moves.length; i++) {
+            greySquare(moves[i].to)
+        }
+    }
+
+    function onMouseoutSquare(square, piece) {
+        removeGreySquares()
+    }
+
+    function onSnapEnd() {
+        board.position(game.fen())
+    }
+
+    var config = {
+        draggable: true,
+        position: 'start',
+        pieceTheme: "{% static '/game/img/chesspieces/wikipedia/' %}" + '{piece}.png',
+        sparePieces: false,
+        showNotation: false,
+        onDragStart: onDragStart,
+        onDrop: onDrop,
+        onMouseoutSquare: onMouseoutSquare,
+        onMouseoverSquare: onMouseoverSquare,
+        onSnapEnd: onSnapEnd,
+    };
+
+    var board = Chessboard('myBoard', config);
+
+    var currentFEN = '';
+
+    var createChessboard = function (fen) {
+        return Chessboard('myBoard', {
+            ...config,
+            position: fen || 'start' // Используем переданный FEN или 'start', если FEN не предоставлен
+        });
+    };
+
+
+    window.addEventListener('resize', function () {
+        currentFEN = board.fen();
+        // Удаляем или скрываем предыдущую доску
+        board.destroy();
+        // Создаем новую доску с теми же конфигурационными значениями
+        board = createChessboard(currentFEN);
+    });
+
+</script>
+{% endblock content %}

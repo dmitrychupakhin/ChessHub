@@ -1,48 +1,284 @@
-.content{
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr;
-    grid-template-areas: "board-wrapper";
-    grid-gap: 20px;
+.content {
     font-family: 'Open Sans', sans-serif;
-    padding: 20px 15%;
-    overflow: hidden;
-}
-
-.chess-board-wrapper, .chat{
-    padding: 10px;
-}
-.chess-board-wrapper{
-    aspect-ratio: 1;
-    grid-area: board-wrapper;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    grid-template-areas: "board game-info" ;
+    grid-gap: 20px;
+    font-size: 40px;
+    height: 100%;
+    padding: 0% 15%;
+    overflow: auto;
     align-items: center;
     justify-content: center;
-    background-color: white;
-    box-shadow: 3px 3px 0px rgb(229, 229, 229);
-    overflow: hidden;
+}
+
+@media only screen and (max-width: 1500px) {
+    .content {
+        font-family: 'Open Sans', sans-serif;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas: "board game-info";
+        grid-gap: 20px;
+        font-size: 40px;
+        height: 100%;
+        padding: 3% 2%;
+        overflow: auto;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+@media only screen and (max-width: 900px) {
+    .content {
+        font-family: 'Open Sans', sans-serif;
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+        grid-template-areas: "board" "game-info";
+        grid-gap: 20px;
+        font-size: 40px;
+        padding: 2% 1%;
+        overflow: auto;
+        align-items: center;
+        justify-content: center;
+    }
+    .display-wrapper {
+        border-radius: 4px;
+        color: rgb(248, 238, 225);
+        display: grid;
+        aspect-ratio: 1;
+        font-size: 20px;
+        grid-template-columns: 1fr;
+        grid-template-rows: 0fr 0fr 3fr 2fr !important;
+        grid-template-areas: "buttons" "evaluation" "game-info" "chat" !important;
+        grid-area: game-info;
+        grid-gap: 20px;
+    }
+}
+
+.timer-top, .timer-bottom {
+    background: linear-gradient(to right, rgb(239, 104, 80), rgb(220, 82, 58));
+    box-shadow: 4px 4px 0px rgb(183, 101, 54);
+    padding: 10px;
+    border-radius: 10px;
+    width: max-content;
+    justify-self: end;
+    font-size: 30px;
+    color: rgb(248, 238, 225);
+}
+
+.username-top,
+.username-bottom {
+    background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
+        box-shadow: 4px 4px 0px rgb(35, 68, 110);
+    padding: 10px;
+    border-radius: 10px;
+    width: max-content;
+    justify-self: start;
+    font-size: 30px;
+    color: rgb(248, 238, 225);
+}
+
+.board-top, .board-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.board-top{
+    grid-area: board-top;
+}
+
+.board-bottom{
+    grid-area: board-bottom;
 }
 
 .chat{
-    display: none;
-    min-width: 300px;
+    display: grid;
+    grid-template-rows: 1fr 0fr;
+    padding: 5px;
     grid-area: chat;
-    height: 100%;
-    background-color: white;
-    box-shadow: 3px 3px 0px rgb(229, 229, 229);
+    border-radius: 4px;
+    box-shadow: 4px 4px 0px rgb(87, 114, 61);
+    background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
 }
 
-.img{
-    height: 400px;
-    width: 400px;
+.chat-form{
+    display: grid;
+    grid-template-columns: 1fr 0fr;
+    gap: 20px;
 }
 
-.display-text{
+.chat-button{
+        background: linear-gradient(to right, rgb(239, 104, 80), rgb(220, 82, 58));
+            box-shadow: 4px 4px 0px rgb(183, 101, 54);
+            font-size: 20px;
+            color: rgb(248, 238, 225);
+    border-radius: 10px;
+    padding: 5px 20px;
+}
+
+.chat-input{
+    font-size: 20px;
+    color: rgb(248, 238, 225);
+    background-color: rgb(89, 123, 55);
+    border-radius: 4px;
+    padding: 5px;
+}
+
+.display-wrapper{
+    border-radius: 4px;
+    color: rgb(248, 238, 225);
+    display: grid;
+    aspect-ratio: 1;
+    font-size: 20px;
+    grid-template-columns: 1fr;
+    grid-template-rows: 3fr 0fr 0fr 2fr;
+    grid-template-areas: "game-info" "evaluation" "buttons" "chat";
+    grid-area: game-info;
+    grid-gap: 20px;
+}
+
+.evaluation{
+    grid-area: evaluation;
+    display: grid;
+    grid-template-columns: 0fr 1fr;
+    font-weight: 900;
+    font-size: 30px;
+    
+}
+
+.highlight1-32417,
+.highlight2-9c5d2 {
+    box-shadow: inset 0 0 0px 3px rgb(248, 238, 225) !important;
+}
+
+#myBoard .board-b72b1 {
+    border: none;
+    margin: auto;
+}
+
+#myBoard .black-3c85d {
+    background-color: rgb(52, 98, 160);
+    background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
+}
+
+#myBoard .white-1e1d7 {
+    background-color: rgb(248, 238, 225);
+}
+
+.chess-wrapper{
+    display: grid;
+    grid-template-areas: "board-top" "board" "board-bottom";
+    grid-gap: 10px;
+}
+
+.display-buttons{
+    box-shadow: 4px 4px 0px rgb(183, 101, 54);
+    background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
+    grid-area: buttons;
+    padding: 10px;
     font-size: 20px;
 }
 
-.chess-board {
-    height: 100%;
-    width: 100%;
+.display-button{
+    background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
+        box-shadow: 4px 4px 0px rgb(35, 68, 110);
+    padding: 10px;
+        font-size: 20px;
+            color: rgb(248, 238, 225);
+    border-radius: 10px;
+}
+
+.evaluation_value{
+    margin-left: 20px;
+}
+
+.game-steps{
+    background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
+    box-shadow: 4px 4px 0px rgb(35, 68, 110);
+    border-radius: 4px;
+    padding: 10px;
+    overflow: auto;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+/* Стилизация полосы прокрутки */
+#gameSteps::-webkit-scrollbar {
+    width: 10px;
+}
+
+#gameSteps::-webkit-scrollbar-thumb {
+        background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
+    /* Цвет ползунка */
+    border-radius: 5px;
+    /* Закругление углов ползунка */
+}
+
+#gameSteps::-webkit-scrollbar-track {
+    background-color: #eee;
+    /* Цвет фона полосы прокрутки */
+}
+
+.step{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.chess-board-wrapper {
+    
+    padding: 10px;
+    border-radius: 4px;
+    color: rgb(248, 238, 225);
+    aspect-ratio: 1;
+    background-color: rgb(255, 134, 113);
+    box-shadow: 4px 4px 0px rgb(183, 101, 54);
+    background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
+    grid-area: board;
+
+}
+
+.game-over-wrapper-title{
+    text-align: center;
+    font-size: 45px;
+    color: rgb(248, 238, 225);
+    font-weight: 800;
+}
+
+
+.game-over-wrapper-button {
+    border-radius: 10px;
+    font-size: 40px;
+    color: rgb(248, 238, 225);
+    font-weight: 700;
+        background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
+            box-shadow: 4px 4px 0px rgb(35, 68, 110);
+}
+
+.rematch-button {
+    border-radius: 10px;
+    font-size: 40px;
+    color: rgb(248, 238, 225);
+    font-weight: 700;
+    box-shadow: 4px 4px 0px rgb(87, 114, 61);
+    background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
+}
+
+.game-over-wrapper{
+    display: grid;
+    gap: 20px;
+    box-shadow: 4px 4px 0px rgb(183, 101, 54);
+    background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 40px;
+
+    font-family: 'Open Sans', sans-serif;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    display: none;
 }

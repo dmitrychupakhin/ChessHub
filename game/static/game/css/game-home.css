@@ -7,8 +7,8 @@
     grid-gap: 20px;
     font-size: 40px;
     height: 100%;
-    padding: 3% 15%;
-    overflow: hidden;
+    padding: 0% 15%;
+    overflow: auto;
     align-items: center;
     justify-content: center;
 }
@@ -24,7 +24,7 @@
                 font-size: 40px;
                 height: 100%;
                 padding: 3% 2%;
-                overflow: hidden;
+                overflow: auto;
                 align-items: center;
                 justify-content: center;
         }
@@ -43,11 +43,20 @@
         overflow: auto;
         align-items: center;
         justify-content: center;
-
     }
+        .chess-board-wrapper {
+            padding: 10px;
+            border-radius: 4px;
+            color: rgb(248, 238, 225);
+            aspect-ratio: 1;
+            background-color: rgb(255, 134, 113);
+            box-shadow: 4px 4px 0px rgb(183, 101, 54);
+            background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
+            display: grid;
+            grid-area: board;
+            margin-bottom: 200px;
+        }
 }
-
-
 
 .menu-wrapper{
     grid-area: menu;
@@ -91,14 +100,6 @@
     background: linear-gradient(to right, rgb(239, 104, 80), rgb(220, 82, 58));
     box-shadow: 4px 4px 0px rgb(183, 101, 54);
 }
-
-.chess-board-wrapper {
-    padding: 10px;
-    border-radius: 4px;
-    color: rgb(248, 238, 225);
-    aspect-ratio: 1;
-}
-
 #myBoard .board-b72b1 {
     border: none;
     margin: auto;
@@ -123,8 +124,12 @@
 }
 
 .chess-board-wrapper {
+    padding: 10px;
+        border-radius: 4px;
+        color: rgb(248, 238, 225);
+        aspect-ratio: 1;
     background-color: rgb(255, 134, 113);
-    box-shadow: 4px 4px 0px rgb(227, 122, 105);
+    box-shadow: 4px 4px 0px rgb(183, 101, 54);
     background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
     display: grid;
     grid-area: board;

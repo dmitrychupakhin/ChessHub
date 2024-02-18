@@ -53,6 +53,7 @@
     crossorigin="anonymous"></script>
 <script>
 
+
     const socket = new WebSocket(`ws://${window.location.host}/ws/home/`);
 
     socket.onopen = (event) => {
@@ -80,13 +81,11 @@
             if (data.white_user == '{{ user.username }}') {
                 document.getElementById('current-room-wrapper').style.display = 'none';
                 document.getElementById('new-room-wrapper').style.display = 'flex';
-                document.getElementById('content').style.gridTemplateAreas = '"chat new-room" "chat rooms" "chat rooms"';
             }
         }
         else if (data.type === 'new-game') {
             if (data.white_user == '{{ user.username }}') {
                 document.getElementById('current-room-wrapper').style.display = 'grid';
-                document.getElementById('content').style.gridTemplateAreas = '"chat current-room" "chat rooms" "chat rooms"';
                 document.getElementById('new-room-wrapper').style.display = 'none';
             }
 
@@ -98,16 +97,13 @@
 
             if (current_games.length) {
                 document.getElementById('current-room-wrapper').style.display = 'grid';
-                document.getElementById('content').style.gridTemplateAreas = '"chat current-room" "chat rooms" "chat rooms"';
-                document.getElementById('new-room-wrapper').style.display = 'none';
-                for (let i = 0; i < current_games.length; i++) {
 
+                for (let i = 0; i < current_games.length; i++) {
                     newRoom(current_games[i].game_id, current_games[i].is_started, current_games[i].white_user === '{{ user.username }}' ? true : false);
                 }
             }
             else {
                 document.getElementById('new-room-wrapper').style.display = 'flex';
-                document.getElementById('content').style.gridTemplateAreas = '"chat new-room" "chat rooms" "chat rooms"';
             }
             for (let i = 0; i < open_games.length; i++) {
                 newRoom(open_games[i].game_id, open_games[i].isStarted, open_games[i].white_user === '{{ user.username }}' ? true : false);

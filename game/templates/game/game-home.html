@@ -13,10 +13,7 @@
 <div class="content" id="content">
 
     <div class="chess-board-wrapper">
-        <div id="myBoard" class="chess-board">
-
-        </div>
-
+        <div id="myBoard" class="chess-board"></div>
     </div>
 
     <div class="menu-wrapper" id="rooms-wrapper">
@@ -31,9 +28,7 @@
 </div>
 <script src="{% static 'game/js/chess.js' %}"></script>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"
-    integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD"
-    crossorigin="anonymous"></script>
+<script src="{% static 'game/js/chessboard-1.0.0.min.js' %}"></script>
 <script>
 
     var b1 = document.getElementById('play-online');

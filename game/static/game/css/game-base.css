@@ -1,4 +1,10 @@
 
+@media only screen and (max-width: 900px) {
+.username {
+        display: none;
+    }
+}
+
 .wrapper {
     display: grid;
     grid-template-rows: 0fr 1fr;
@@ -10,6 +16,7 @@
     background-position: center;
     background-repeat: no-repeat;
     overflow: hidden;
+    font-family: 'Lobster Two', sans-serif;
 }
 
 .header{
@@ -20,10 +27,11 @@
     box-shadow: 4px 4px 0px rgb(227, 214, 198);
     border-radius: 7px;
     padding: 10px 15%;
+    z-index: 100;
 }
 
 .header-title{
-    font-family: 'Lobster Two', sans-serif;
+    margin-right: 5%;
     font-size: 40px;
     color: rgb(57, 56, 53);
     font-weight: 900;

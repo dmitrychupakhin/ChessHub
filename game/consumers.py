@@ -1,10 +1,14 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from chess import Board
+import chess
+import chess.pgn
+from django.utils import timezone
 from channels.db import database_sync_to_async
 from .models import *
 from django.db.models import Q
 import random
+from io import StringIO
+from datetime import timedelta
 
 class GameConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
@@ -13,8 +17,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         game_data = {
             'white_user': game.white_user.username,
             'black_user': game.black_user.username,
+            'is_white_move': game.is_white_move,
+            'game_pgn': game.pgn
         }
         return game_data
+    
     async def connect(self):
         self.room_group_name = self.scope['url_route']['kwargs']['game_id']
         await self.channel_layer.group_add(
@@ -31,19 +38,101 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        type = data['type']
         print(data)
+        type = data['type']
         
         if type == 'game-data':
             game_id = self.scope['url_route']['kwargs']['game_id']
             game_data = await self.get_game_data(game_id)
             await self.send(
                 text_data=json.dumps({
-                    'type': 'game-data',
+                    'type': 'game-data', 
                     'game_data': game_data,
                 })
             )
+        elif type == 'rematch':
+            game_id = self.scope['url_route']['kwargs']['game_id']
+            self.room_group_name = game_id
+            game = await database_sync_to_async(ChessGame.objects.get)(id=game_id)
             
+            if game.white_rematch and game.black_rematch:
+                return
+            
+            if game.is_finished:
+                user = self.scope["user"]
+                game_data = await self.get_game_data(game_id)
+                if game_data['white_user'] == user.username:
+                    game.white_rematch = True
+                elif game_data['black_user'] == user.username:
+                    game.black_rematch = True
+                    
+            await database_sync_to_async(game.save)()
+            
+            if game.white_rematch and game.black_rematch:
+                white_user = await database_sync_to_async(User.objects.get)(username=game_data['white_user'])
+                black_user = await database_sync_to_async(User.objects.get)(username=game_data['black_user'])
+                chess_game = await database_sync_to_async(ChessGame.objects.create)(white_user=white_user, black_user=black_user)
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'rematch',
+                        'game_id': chess_game.pk
+                    }
+                )
+            else:    
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'rematch',
+                        'white_rematch':  game.white_rematch,
+                        'black_rematch':  game.black_rematch,
+                    }
+                )
+                
+        elif type == 'move':
+            game_id = self.scope['url_route']['kwargs']['game_id']
+            self.room_group_name = game_id
+            game = await database_sync_to_async(ChessGame.objects.get)(id=game_id)
+            game_data = await self.get_game_data(game_id)
+            
+            if game.is_white_move:
+                user = game_data['white_user']
+            else:
+                user = game_data['black_user']
+            
+            board = chess.Board()
+            if game.fen:
+                board.set_fen(game.fen)
+            board.push_san(data['move'])
+            game.fen = board.fen()
+            
+            print(board)
+            
+            if board.is_game_over():
+                game.is_finished = True
+            else:
+                print("Игра продолжается.")
+            
+            game.pgn = data['gamePGN']
+            game.is_white_move = not game.is_white_move
+            await database_sync_to_async(game.save)()
+            
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'game_move',
+                    'user': user,
+                    'move': data['move'],
+                }
+            )
+            
+    async def game_move(self, event):
+        event['type'] = 'game-move'
+        await self.send(text_data=json.dumps(event))
+    
+    async def rematch(self, event):
+        event['type'] = 'rematch'
+        await self.send(text_data=json.dumps(event))
             
 
 class HomeConsumer(AsyncWebsocketConsumer):
@@ -119,7 +208,9 @@ class HomeConsumer(AsyncWebsocketConsumer):
         print(data)
         if type == 'new-game':
             user = self.scope["user"]
-            chess_game = await database_sync_to_async(ChessGame.objects.create)(white_user=user)
+            chess_game = await database_sync_to_async(ChessGame.objects.create)(white_user=user,
+                total_game_time=timedelta(minutes=int(data['game_time'])),
+                move_increment=timedelta(seconds=int(data['step_time'])))
             await self.channel_layer.group_send(
                 'home',
                 {
@@ -146,6 +237,7 @@ class HomeConsumer(AsyncWebsocketConsumer):
             chess_game = await database_sync_to_async(ChessGame.objects.get)(id=game_id)
             chess_game.black_user = user
             chess_game.is_started = True
+            chess_game.start_time=timezone.now()
             await database_sync_to_async(chess_game.save)()
             await self.start_game_random(chess_game)
             white_user, black_user = await self.get_white_black_user(chess_game)

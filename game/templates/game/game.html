@@ -10,27 +10,68 @@
 {% endblock head %}
 
 {% block content %}
+<div class="game-over-wrapper" id="gameOverWrapper">
+    <div class="game-over-wrapper-title" id="gameOverTitleWrapper">Game Over</div>
+    <button class="game-over-wrapper-button rematch-button" id="rematchButton">Rematch!</button>
+    <button class="game-over-wrapper-button" id="homeButton">Home</button>
+</div>
 <div class="content">
-    <div class="chess-board-wrapper">
-        <div id="myBoard" class="chess-board" style="width: 400px"></div>
+    <div class="chess-wrapper">
+        <div class="board-top">
+            <div class="username-top" id="username-top">user</div>
+            <div class="timer-top" id="timerTop">9:56</div>
+        </div>
+        <div class="chess-board-wrapper">
+            <div id="myBoard" class="chess-board"></div>
+        </div>
+        <div class="board-bottom">
+            <div class="username-top" id="username-bottom">{{ user.username}}</div>
+            <div class="timer-bottom">9:56</div>
+        </div>
     </div>
-    <div class="chat">
-        <div class="message">Аня - Привет</div>
-        <div class="message">Аня - Как дела?</div>
-        <div class="message">Соня - Хорошо</div>
+    <div class="display-wrapper">
+        <div class="game-steps" id="gameSteps">
+            none
+        </div>
+        <div class="evaluation">
+            <div class="evaluation_title">Evaluation: </div>
+            <div class="evaluation_value" id="evaluationValue">0.00</div>
+        </div>
+        <div class="display-buttons">
+            <button class="display-button">Draw</button>
+        </div>
+        <div class="chat">
+            <div class="messages">
+                <div class="message">
+                    <div class="message-user">aboba</div>
+                    <div class="message-text">Привет!</div>
+                </div>
+            </div>
+            <div class="chat-form">
+                <input class="chat-input" type="text">
+                <button class="chat-button">Send!</button>
+            </div>
+        </div>
     </div>
 </div>
+<script src="{% static 'game/js/chess.js' %}"></script>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"
-    integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD"
-    crossorigin="anonymous"></script>
-<script src="
-    https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish-nnue-16.min.js
-    "></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"
-    integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz"
-    crossorigin="anonymous"></script>
+<script src="{% static 'game/js/chessboard-1.0.0.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish-nnue-16.min.js"></script>
 <script>
+
+    var b1 = document.getElementById('homeButton');
+    b1.addEventListener('click', function () {
+        window.location.href = "{% url 'game-home' %}"
+    });
+
+    var b2 = document.getElementById('rematchButton');
+    b2.addEventListener('click', function () {
+        var data = {
+            type: 'rematch',
+        };
+        socket.send(JSON.stringify(data));
+    });
 
     const socket = new WebSocket(`ws://${window.location.host}/ws/game/{{ game_id }}/`);
 
@@ -43,15 +84,61 @@
     };
     socket.onmessage = (event) => {
         console.log(event.data);
+        var data = JSON.parse(event.data);
+        if (data.type === 'game-data') {
+            game = new Chess();
+            game.load_pgn(data.game_data.game_pgn);
+            board = createChessboard(game.fen());
+
+            if ('{{ user.username}}' === data.game_data.white_user) {
+                document.getElementById('username-top').innerText = data.game_data.black_user;
+            }
+            else {
+                document.getElementById('username-top').innerText = data.game_data.white_user;
+            }
+            if (data.game_data.white_user == '{{ user.username }}') {
+                is_white_user = true;
+            }
+            else {
+                is_white_user = false;
+                flipBoard();
+            }
+            updateMoveList()
+            getEvaluation();
+
+        }
+        else if (data.type === 'rematch') {
+            if (data.game_id) {
+                window.location.replace(`/game/${data.game_id}/`);
+            }
+        }
+        else if (data.type === 'game-move') {
+            if (data.user !== '{{ user.username }}') {
+                game.move(data.move);
+                board.position(game.fen())
+                updateMoveList();
+                getEvaluation();
+                if (game.in_checkmate()) {
+                    var winner = game.turn() === 'w' ? 'Black' : 'White';
+                    document.getElementById('gameOverWrapper').style.display = 'grid';
+                    document.getElementById('gameOverTitleWrapper').innerText = "Checkmate!" + winner + " wins!";
+                }
+            }
+        }
     };
     socket.onclose = function (event) {
         console.log('WebSocket connection closed:', event);
     };
 
-    var board = null
-    var game = new Chess()
-    var whiteSquareGrey = '#a9a9a9'
-    var blackSquareGrey = '#696969'
+    function flipBoard() {
+        board.orientation('black');
+    }
+
+    var is_white_user = true;
+    var board = null;
+    var game = null;
+    var whiteSquareGrey = '#a9a9a9';
+    var blackSquareGrey = '#696969';
 
     function removeGreySquares() {
         $('#myBoard .square-55d63').css('background', '')
@@ -68,9 +155,18 @@
         $square.css('background', background)
     }
 
+
     function onDragStart(source, piece) {
+
         // do not pick up pieces if the game is over
         if (game.game_over()) return false
+
+        if (is_white_user && game.turn() === 'b') {
+            return false;
+        }
+        else if (is_white_user === false && game.turn() === 'w') {
+            return false;
+        }
 
         // or if it's not that side's turn
         if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
@@ -81,33 +177,41 @@
 
     function onDrop(source, target) {
         removeGreySquares()
-
         // see if the move is legal
         var move = game.move({
             from: source,
             to: target,
-            promotion: 'q'
+            promotion: 'q' // NOTE: always promote to a queen for example simplicity
         })
 
         // illegal move
-        if (move === null) {
-            console.log('Illegal move: ' + source + ' to ' + target);
-            return 'snapback';
-        } else {
-            console.log('Legal move: ' + move.from + ' to ' + move.to);
-        }
+        if (move === null) return 'snapback'
+
+        setTimeout(function () {
+            // Check if the game is over (checkmate)
+            if (game.in_checkmate()) {
+                var winner = game.turn() === 'w' ? 'Black' : 'White';
+                document.getElementById('gameOverWrapper').style.display = 'grid';
+                document.getElementById('gameOverTitleWrapper').innerText = "Checkmate!" + winner + " wins!";
+            }
+            getEvaluation();
+        }, 150);
     }
 
     function onMouseoverSquare(square, piece) {
+        if (piece && piece.charAt(0) === 'b' && is_white_user) {
+            return;
+        }
+        else if (piece && piece.charAt(0) === 'w' && is_white_user == false) {
+            return;
+        }
         // get list of possible moves for this square
         var moves = game.moves({
             square: square,
             verbose: true
         })
-
         // exit if there are no moves available for this square
         if (moves.length === 0) return
-
         // highlight the square they moused over
         greySquare(square)
 
@@ -115,6 +219,7 @@
         for (var i = 0; i < moves.length; i++) {
             greySquare(moves[i].to)
         }
+
     }
 
     function onMouseoutSquare(square, piece) {
@@ -123,22 +228,162 @@
 
     function onSnapEnd() {
         board.position(game.fen())
+        const history = game.history();
+        var move = history[history.length - 1];
+        var gamePGN = game.pgn(true);
+        var moves = gamePGN.split(' ');
+        updateMoveList();
+        var data = {
+            type: 'move',
+            move: move,
+            gamePGN: gamePGN
+        };
+        socket.send(JSON.stringify(data));
     }
 
 
     var config = {
         draggable: true,
         position: 'start',
+        pieceTheme: "{% static '/game/img/chesspieces/wikipedia/' %}" + '{piece}.png',
+        sparePieces: false,
+        showNotation: true,
         onDragStart: onDragStart,
         onDrop: onDrop,
         onMouseoutSquare: onMouseoutSquare,
         onMouseoverSquare: onMouseoverSquare,
         onSnapEnd: onSnapEnd,
-        pieceTheme: "{% static '/game/img/chesspieces/wikipedia/' %}" + '{piece}.png'
     };
 
     var board = Chessboard('myBoard', config);
 
+    var boardElement = document.getElementById('myBoard');
+
+    boardElement.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        var touch = e.touches[0];
+        onDragStart(board, touch);
+        isDragging = true;
+    }, false);
+
+    boardElement.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+        if (isDragging) {
+            var touch = e.touches[0];
+            onDrop(board, touch);
+        }
+    }, false);
+
+    boardElement.addEventListener('touchend', function (e) {
+        e.preventDefault();
+        isDragging = false;
+    }, false);
+
+    var currentFEN = '';
+
+    var createChessboard = function (fen) {
+        return Chessboard('myBoard', {
+            ...config,
+            position: fen || 'start' // Используем переданный FEN или 'start', если FEN не предоставлен
+        });
+    };
+
+    window.addEventListener('resize', function () {
+        currentFEN = board.fen();
+        // Удаляем или скрываем предыдущую доску
+        board.destroy();
+        // Создаем новую доску с теми же конфигурационными значениями
+        board = createChessboard(currentFEN);
+
+        if (is_white_user == false) {
+            flipBoard();
+        }
+    });
+
+    var stockfish = new Worker("{% static 'game/js/stockfish.js' %}");
+
+    var startTime = new Date().getTime();
+
+    // Получаем ссылку на блок div
+    var timerElement = document.getElementById('timerTop');
+
+    function updateTimer() {
+        // Получаем текущее время в миллисекундах
+        var currentTime = new Date().getTime();
+
+        // Вычисляем оставшееся время
+        var remainingTime = currentTime - startTime;
+
+        // Переводим миллисекунды в минуты и секунды
+        var minutes = Math.floor(remainingTime / (60 * 1000));
+        var seconds = Math.floor((remainingTime % (60 * 1000)) / 1000);
+
+        var minutesStr = minutes.toString().padStart(2, '0');
+        var secondsStr = seconds.toString().padStart(2, '0');
+
+        // Проверяем, что время не отрицательное, прежде чем обновлять таймер
+        if (remainingTime >= 0) {
+            // Отображаем оставшееся время в блоке div
+            timerElement.textContent = minutesStr + ':' + secondsStr + '';
+        } else {
+            // Если время истекло, можем выполнить дополнительные действия, например, вывести сообщение
+            timerElement.textContent = 'Время вышло!';
+            // Можно также добавить дополнительные действия или остановить таймер
+            clearInterval(timerInterval);
+        }
+    }
+
+    // Запускаем таймер с интервалом в 1 секунду
+    var timerInterval = setInterval(updateTimer, 1000);
+
+    // Вызываем функцию updateTimer один раз сразу после загрузки страницы
+    updateTimer();
+
+    function updateMoveList() {
+        var pgnString = "";
+
+        // Получаем массив ходов
+        var moves_verbose = game.history({ verbose: true });
+
+        // Добавляем каждый ход в строку
+        for (var i = 0; i < moves_verbose.length; i++) {
+            if (i % 2 === 0) {
+                // Добавляем номер хода, если это первый ход пары
+                pgnString += ((i / 2) + 1) + ". ";
+            }
+
+            // Добавляем алгебраическую нотацию хода
+            pgnString += moves_verbose[i].san + " ";
+
+            // Добавляем перевод строки после второго хода пары
+            if (i % 2 === 1) {
+                pgnString += "\n";
+            }
+        }
+        document.getElementById('gameSteps').innerText = pgnString;
+        document.getElementById('gameSteps').scrollTop = document.getElementById('gameSteps').scrollHeight;
+        if (game.in_checkmate()) {
+            var winner = game.turn() === 'w' ? 'Black' : 'White';
+            document.getElementById('gameOverWrapper').style.display = 'grid';
+            document.getElementById('gameOverTitleWrapper').innerText = "Checkmate!" + winner + " wins!";
+        }
+    }
+
+    function getEvaluation() {
+        // Получаем оценку позиции от Stockfish
+        stockfish.postMessage('position fen ' + game.fen());
+        stockfish.postMessage('eval');
+
+        // Обрабатываем ответ от Stockfish
+        stockfish.onmessage = function (event) {
+            var match = event.data.match(/Total Evaluation: ([0-9.-]+)/);
+
+            if (match && match[1]) {
+                var evaluation = parseFloat(match[1]);
+                document.getElementById('evaluationValue').innerText = evaluation;
+            }
+        };
+    }
 
 </script>
 {% endblock content %}

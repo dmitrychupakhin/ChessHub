@@ -19,14 +19,14 @@
     <div class="chess-wrapper">
         <div class="board-top">
             <div class="username-top" id="username-top">user</div>
-            <div class="timer-top" id="timerTop">9:56</div>
+            <div class="timer-top" id="timerTop">time</div>
         </div>
         <div class="chess-board-wrapper">
             <div id="myBoard" class="chess-board"></div>
         </div>
         <div class="board-bottom">
             <div class="username-top" id="username-bottom">{{ user.username}}</div>
-            <div class="timer-bottom">9:56</div>
+            <div class="timer-bottom" id="timerBottom">time</div>
         </div>
     </div>
     <div class="display-wrapper">
@@ -89,23 +89,62 @@
             game = new Chess();
             game.load_pgn(data.game_data.game_pgn);
             board = createChessboard(game.fen());
-
             if ('{{ user.username}}' === data.game_data.white_user) {
-                document.getElementById('username-top').innerText = data.game_data.black_user;
-            }
-            else {
-                document.getElementById('username-top').innerText = data.game_data.white_user;
-            }
-            if (data.game_data.white_user == '{{ user.username }}') {
+
                 is_white_user = true;
+                document.getElementById('username-top').innerText = data.game_data.black_user;
+                var currentDate = new Date();
+                if (data.game_data.is_white_move) {
+                    startTimer('timerTop', data.game_data.black_user_end_time, data.game_data.last_move_time);
+                    startTimer('timerBottom', data.game_data.white_user_end_time);
+                    clearInterval(topTimerInterval);
+                }
+                else {
+                    startTimer('timerTop', data.game_data.black_user_end_time);
+                    startTimer('timerBottom', data.game_data.white_user_end_time, data.game_data.last_move_time);
+                    clearInterval(bottomTimerInterval);
+                }
+                if (data.game_data.is_finished) {
+                    var currentDate = new Date();
+                    startTimer('timerBottom', currentDate + data.game_data.white_user_end_time);
+                    startTimer('timerTop', currentDate + data.game_data.black_user_end_time);
+                    clearInterval(topTimerInterval);
+                    clearInterval(bottomTimerInterval);
+                }
             }
             else {
                 is_white_user = false;
                 flipBoard();
-            }
-            updateMoveList()
-            getEvaluation();
+                document.getElementById('username-top').innerText = data.game_data.white_user;
 
+                if (data.game_data.is_white_move) {
+                    startTimer('timerTop', data.game_data.white_user_end_time);
+                    startTimer('timerBottom', data.game_data.black_user_end_time, data.game_data.last_move_time);
+                    clearInterval(bottomTimerInterval);
+                }
+                else {
+                    startTimer('timerTop', data.game_data.white_user_end_time, data.game_data.last_move_time);
+                    startTimer('timerBottom', data.game_data.black_user_end_time);
+                    clearInterval(topTimerInterval);
+                }
+                if (data.game_data.is_finished) {
+                    var currentDate = new Date();
+                    startTimer('timerTop', currentDate + data.game_data.white_user_end_time);
+                    startTimer('timerBottom', currentDate + data.game_data.black_user_end_time);
+                    clearInterval(topTimerInterval);
+                    clearInterval(bottomTimerInterval);
+                }
+            }
+
+            if (game.in_checkmate()) {
+                var winner = game.turn() === 'w' ? 'Black' : 'White';
+                document.getElementById('gameOverWrapper').style.display = 'grid';
+                document.getElementById('gameOverTitleWrapper').innerText = "Checkmate!" + winner + " wins!";
+                clearInterval(topTimerInterval);
+                clearInterval(bottomTimerInterval);
+            }
+            updateMoveList();
+            getEvaluation();
         }
         else if (data.type === 'rematch') {
             if (data.game_id) {
@@ -115,7 +154,7 @@
         else if (data.type === 'game-move') {
             if (data.user !== '{{ user.username }}') {
                 game.move(data.move);
-                board.position(game.fen())
+                board.position(game.fen());
                 updateMoveList();
                 getEvaluation();
                 if (game.in_checkmate()) {
@@ -124,11 +163,90 @@
                     document.getElementById('gameOverTitleWrapper').innerText = "Checkmate!" + winner + " wins!";
                 }
             }
+            if (is_white_user) {
+                stopTimer(topTimerInterval);
+                stopTimer(bottomTimerInterval);
+                startTimer('timerTop', data.black_user_end_time);
+                startTimer('timerBottom', data.white_user_end_time);
+                console.log(game.turn());
+                if (game.turn() === 'w') {
+                    stopTimer(topTimerInterval);
+                } else {
+                    stopTimer(bottomTimerInterval);
+                }
+            } else {
+                stopTimer(topTimerInterval);
+                stopTimer(bottomTimerInterval);
+                startTimer('timerTop', data.white_user_end_time);
+                startTimer('timerBottom', data.black_user_end_time);
+                console.log(game.turn());
+                if (game.turn() === 'w') {
+                    stopTimer(bottomTimerInterval);
+                } else {
+                    stopTimer(topTimerInterval);
+                }
+            }
         }
     };
     socket.onclose = function (event) {
         console.log('WebSocket connection closed:', event);
     };
+
+    var topTimerInterval, bottomTimerInterval;
+
+    function stopTimer(timerInterval) {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+    }
+
+    function updateTimer(timerId, endDate, timerInterval, lastMoveTime) {
+        var currentDate = new Date();
+        var lastMoveDate = new Date(lastMoveTime);
+        var endDate = new Date(endDate);
+        if (lastMoveTime) {
+            var timeDifference = currentDate - lastMoveDate;
+            endDate.setTime(endDate.getTime() + timeDifference);
+        }
+        var timerElement = document.getElementById(timerId);
+        var timeDifference = endDate - currentDate;
+        if (timeDifference > 0) {
+            var days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+            var hours = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
+
+            timerElement.textContent = `${days}d ${hours}h ${minutes}m ${seconds}c`;
+
+        } else {
+            clearInterval(topTimerInterval);
+            clearInterval(bottomTimerInterval);
+            timerElement.textContent = "The timer has expired";
+            var winner = game.turn() === 'w' ? 'Black' : 'White';
+            document.getElementById('gameOverWrapper').style.display = 'grid';
+            document.getElementById('gameOverTitleWrapper').innerText = "Checkmate!" + winner + " wins!";
+            var data = {
+                type: 'end-game',
+            };
+            socket.send(JSON.stringify(data));
+
+        }
+    }
+
+    function startTimer(timerId, endDate, lastMoveTime) {
+        var timerInterval;  // создаем новый интервал для каждого таймера
+        if (timerId === 'timerTop') {
+            updateTimer(timerId, endDate, topTimerInterval, lastMoveTime);
+            topTimerInterval = setInterval(function () {
+                updateTimer(timerId, endDate, topTimerInterval, lastMoveTime);
+            }, 1000);
+        } else if (timerId === 'timerBottom') {
+            updateTimer(timerId, endDate, bottomTimerInterval, lastMoveTime);
+            bottomTimerInterval = setInterval(function () {
+                updateTimer(timerId, endDate, bottomTimerInterval, lastMoveTime);
+            }, 1000);
+        }
+    }
 
     function flipBoard() {
         board.orientation('black');
@@ -302,42 +420,7 @@
 
     var stockfish = new Worker("{% static 'game/js/stockfish.js' %}");
 
-    var startTime = new Date().getTime();
 
-    // Получаем ссылку на блок div
-    var timerElement = document.getElementById('timerTop');
-
-    function updateTimer() {
-        // Получаем текущее время в миллисекундах
-        var currentTime = new Date().getTime();
-
-        // Вычисляем оставшееся время
-        var remainingTime = currentTime - startTime;
-
-        // Переводим миллисекунды в минуты и секунды
-        var minutes = Math.floor(remainingTime / (60 * 1000));
-        var seconds = Math.floor((remainingTime % (60 * 1000)) / 1000);
-
-        var minutesStr = minutes.toString().padStart(2, '0');
-        var secondsStr = seconds.toString().padStart(2, '0');
-
-        // Проверяем, что время не отрицательное, прежде чем обновлять таймер
-        if (remainingTime >= 0) {
-            // Отображаем оставшееся время в блоке div
-            timerElement.textContent = minutesStr + ':' + secondsStr + '';
-        } else {
-            // Если время истекло, можем выполнить дополнительные действия, например, вывести сообщение
-            timerElement.textContent = 'Время вышло!';
-            // Можно также добавить дополнительные действия или остановить таймер
-            clearInterval(timerInterval);
-        }
-    }
-
-    // Запускаем таймер с интервалом в 1 секунду
-    var timerInterval = setInterval(updateTimer, 1000);
-
-    // Вызываем функцию updateTimer один раз сразу после загрузки страницы
-    updateTimer();
 
     function updateMoveList() {
         var pgnString = "";

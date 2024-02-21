@@ -17,6 +17,14 @@ class ChessGame(models.Model):
     is_started = models.BooleanField(default=False)
     is_finished = models.BooleanField(default=False)
     
-    start_time = models.DateTimeField(null=True, blank=True)  # Время начала игры
-    total_game_time = models.DurationField(null=True, blank=True)  # Общее время на игру
-    move_increment = models.DurationField(null=True, blank=True)  # Время прибавки к каждому ходу
+    start_time = models.DateTimeField(null=True, blank=True) 
+    total_game_time = models.DurationField(null=True, blank=True) 
+    move_increment = models.DurationField(null=True, blank=True)  
+    
+    last_move_time = models.DateTimeField(null=True,blank=True)
+    
+    white_user_end_time = models.DateTimeField(null=True, blank=True)
+    black_user_end_time = models.DateTimeField(null=True, blank=True)
+
+    white_user_remaining_time = models.DurationField(null=True, blank=True)  
+    black_user_remaining_time = models.DurationField(null=True, blank=True)  

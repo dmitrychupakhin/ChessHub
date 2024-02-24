@@ -12,8 +12,15 @@
 {% block content %}
 <div class="game-over-wrapper" id="gameOverWrapper">
     <div class="game-over-wrapper-title" id="gameOverTitleWrapper">Game Over</div>
+    <div class="game-over-wrapper-messages">
+        <div class="white-message" id="whiteMessage"></div>
+        <div class="black-message" id="blackMessage"></div>
+    </div>
     <button class="game-over-wrapper-button rematch-button" id="rematchButton">Rematch!</button>
     <button class="game-over-wrapper-button" id="homeButton">Home</button>
+</div>
+<div class="loading-container" id="loadingContainer">
+    <div class="loading-spinner"></div>
 </div>
 <div class="content">
     <div class="chess-wrapper">
@@ -86,165 +93,228 @@
         console.log(event.data);
         var data = JSON.parse(event.data);
         if (data.type === 'game-data') {
+            var endTimeWhite = new Date(data.game_data.white_user_end_time);
+            var endTimeBlack = new Date(data.game_data.black_user_end_time);
+            var lastMoveTime = new Date(data.game_data.last_move_time);
+            var userIsWhite = '{{ user.username }}' == data.game_data.white_user ? true : false;
+            var isWhiteMove = data.game_data.is_white_move;
+
+            var whiteUser = data.game_data.white_user;
+            var blackUser = data.game_data.black_user;
+
             game = new Chess();
             game.load_pgn(data.game_data.game_pgn);
             board = createChessboard(game.fen());
-            if ('{{ user.username}}' === data.game_data.white_user) {
 
-                is_white_user = true;
-                document.getElementById('username-top').innerText = data.game_data.black_user;
-                var currentDate = new Date();
-                if (data.game_data.is_white_move) {
-                    startTimer('timerTop', data.game_data.black_user_end_time, data.game_data.last_move_time);
-                    startTimer('timerBottom', data.game_data.white_user_end_time);
-                    clearInterval(topTimerInterval);
-                }
-                else {
-                    startTimer('timerTop', data.game_data.black_user_end_time);
-                    startTimer('timerBottom', data.game_data.white_user_end_time, data.game_data.last_move_time);
-                    clearInterval(bottomTimerInterval);
-                }
-                if (data.game_data.is_finished) {
-                    var currentDate = new Date();
-                    startTimer('timerBottom', currentDate + data.game_data.white_user_end_time);
-                    startTimer('timerTop', currentDate + data.game_data.black_user_end_time);
-                    clearInterval(topTimerInterval);
-                    clearInterval(bottomTimerInterval);
-                }
-            }
-            else {
-                is_white_user = false;
-                flipBoard();
-                document.getElementById('username-top').innerText = data.game_data.white_user;
-
-                if (data.game_data.is_white_move) {
-                    startTimer('timerTop', data.game_data.white_user_end_time);
-                    startTimer('timerBottom', data.game_data.black_user_end_time, data.game_data.last_move_time);
-                    clearInterval(bottomTimerInterval);
-                }
-                else {
-                    startTimer('timerTop', data.game_data.white_user_end_time, data.game_data.last_move_time);
-                    startTimer('timerBottom', data.game_data.black_user_end_time);
-                    clearInterval(topTimerInterval);
-                }
-                if (data.game_data.is_finished) {
-                    var currentDate = new Date();
-                    startTimer('timerTop', currentDate + data.game_data.white_user_end_time);
-                    startTimer('timerBottom', currentDate + data.game_data.black_user_end_time);
-                    clearInterval(topTimerInterval);
-                    clearInterval(bottomTimerInterval);
-                }
-            }
-
-            if (game.in_checkmate()) {
-                var winner = game.turn() === 'w' ? 'Black' : 'White';
-                document.getElementById('gameOverWrapper').style.display = 'grid';
-                document.getElementById('gameOverTitleWrapper').innerText = "Checkmate!" + winner + " wins!";
-                clearInterval(topTimerInterval);
-                clearInterval(bottomTimerInterval);
-            }
+            initGame(userIsWhite, whiteUser, blackUser);
+            initTimer(endTimeWhite, endTimeBlack, lastMoveTime, userIsWhite, isWhiteMove);
             updateMoveList();
             getEvaluation();
+            if (data.game_data.is_finished) {
+                initEndGameTimer(data.game_data.white_user_remaining_time, data.game_data.black_user_remaining_time, userIsWhite);
+                gameOver(data.game_data.white_rematch, data.game_data.black_rematch);
+            }
+            document.getElementById('loadingContainer').style.display = 'none';
         }
         else if (data.type === 'rematch') {
             if (data.game_id) {
                 window.location.replace(`/game/${data.game_id}/`);
             }
+            gameOver(data.white_rematch, data.black_rematch);
         }
         else if (data.type === 'game-move') {
+            var endTimeWhite = new Date(data.white_user_end_time);
+            var endTimeBlack = new Date(data.black_user_end_time);
+            var lastMoveTime = new Date(data.last_move_time);
+            var isWhiteMove = data.is_white_move;
+            initTimer(endTimeWhite, endTimeBlack, lastMoveTime, isWhiteUser, isWhiteMove);
             if (data.user !== '{{ user.username }}') {
                 game.move(data.move);
                 board.position(game.fen());
                 updateMoveList();
                 getEvaluation();
-                if (game.in_checkmate()) {
-                    var winner = game.turn() === 'w' ? 'Black' : 'White';
-                    document.getElementById('gameOverWrapper').style.display = 'grid';
-                    document.getElementById('gameOverTitleWrapper').innerText = "Checkmate!" + winner + " wins!";
-                }
             }
-            if (is_white_user) {
-                stopTimer(topTimerInterval);
-                stopTimer(bottomTimerInterval);
-                startTimer('timerTop', data.black_user_end_time);
-                startTimer('timerBottom', data.white_user_end_time);
-                console.log(game.turn());
-                if (game.turn() === 'w') {
-                    stopTimer(topTimerInterval);
-                } else {
-                    stopTimer(bottomTimerInterval);
-                }
-            } else {
-                stopTimer(topTimerInterval);
-                stopTimer(bottomTimerInterval);
-                startTimer('timerTop', data.white_user_end_time);
-                startTimer('timerBottom', data.black_user_end_time);
-                console.log(game.turn());
-                if (game.turn() === 'w') {
-                    stopTimer(bottomTimerInterval);
-                } else {
-                    stopTimer(topTimerInterval);
-                }
+            if (game.in_checkmate()) {
+                clearInterval(timerInterval);
+                gameOver();
             }
         }
     };
     socket.onclose = function (event) {
         console.log('WebSocket connection closed:', event);
     };
-
-    var topTimerInterval, bottomTimerInterval;
-
-    function stopTimer(timerInterval) {
-        if (timerInterval) {
-            clearInterval(timerInterval);
+    function initGame(userIsWhite, whiteUser, blackUser) {
+        if (userIsWhite) {
+            document.getElementById('username-top').innerText = blackUser;
+            document.getElementById('username-bottom').innerText = whiteUser;
+            isWhiteUser = true;
+        }
+        else {
+            document.getElementById('username-top').innerText = whiteUser;
+            document.getElementById('username-bottom').innerText = blackUser;
+            isWhiteUser = false;
+            flipBoard();
         }
     }
-
-    function updateTimer(timerId, endDate, timerInterval, lastMoveTime) {
-        var currentDate = new Date();
-        var lastMoveDate = new Date(lastMoveTime);
-        var endDate = new Date(endDate);
-        if (lastMoveTime) {
-            var timeDifference = currentDate - lastMoveDate;
-            endDate.setTime(endDate.getTime() + timeDifference);
+    function gameOver(whiteRematch, blackRematch) {
+        var winner = game.turn() === 'w' ? 'Black' : 'White';
+        document.getElementById('gameOverWrapper').style.display = 'grid';
+        document.getElementById('gameOverTitleWrapper').innerText = "Game Over! " + winner + " wins!";
+        if (blackRematch) {
+            document.getElementById('blackMessage').innerText = "Black want rematch!";
         }
-        var timerElement = document.getElementById(timerId);
-        var timeDifference = endDate - currentDate;
-        if (timeDifference > 0) {
-            var days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
-            var hours = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            var minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
-            var seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
-
-            timerElement.textContent = `${days}d ${hours}h ${minutes}m ${seconds}c`;
-
-        } else {
-            clearInterval(topTimerInterval);
-            clearInterval(bottomTimerInterval);
-            timerElement.textContent = "The timer has expired";
-            var winner = game.turn() === 'w' ? 'Black' : 'White';
-            document.getElementById('gameOverWrapper').style.display = 'grid';
-            document.getElementById('gameOverTitleWrapper').innerText = "Checkmate!" + winner + " wins!";
-            var data = {
-                type: 'end-game',
-            };
-            socket.send(JSON.stringify(data));
-
+        if (whiteRematch) {
+            document.getElementById('whiteMessage').innerText = "White want rematch!";
         }
     }
+    function initEndGameTimer(whiteRemainingTime, blackRemainingTime, isWhiteUser) {
+        clearInterval(timerInterval);
 
-    function startTimer(timerId, endDate, lastMoveTime) {
-        var timerInterval;  // создаем новый интервал для каждого таймера
-        if (timerId === 'timerTop') {
-            updateTimer(timerId, endDate, topTimerInterval, lastMoveTime);
-            topTimerInterval = setInterval(function () {
-                updateTimer(timerId, endDate, topTimerInterval, lastMoveTime);
-            }, 1000);
-        } else if (timerId === 'timerBottom') {
-            updateTimer(timerId, endDate, bottomTimerInterval, lastMoveTime);
-            bottomTimerInterval = setInterval(function () {
-                updateTimer(timerId, endDate, bottomTimerInterval, lastMoveTime);
-            }, 1000);
+        var remainingTimeBlack = blackRemainingTime * 1000;
+        var secondsBlack = Math.floor(remainingTimeBlack / 1000);
+        var millisecondsBlack = Math.floor(remainingTimeBlack % 1000);
+        var minutesBlack = Math.floor(secondsBlack / 60);
+        var hoursBlack = Math.floor(minutesBlack / 60);
+
+        var formattedHoursBlack = ("0" + hoursBlack).slice(-2);
+        var formattedMinutesBlack = ("0" + (minutesBlack % 60)).slice(-2);
+        var formattedSecondsBlack = ("0" + (secondsBlack % 60)).slice(-2);
+        var formattedMillisecondsBlack = ("000" + millisecondsBlack).slice(-3, -2);
+
+        var formattedTimeBlack = formattedHoursBlack + ":" + formattedMinutesBlack + ":" + formattedSecondsBlack + "." + formattedMillisecondsBlack;
+
+        var remainingTimeWhite = whiteRemainingTime * 1000;
+        var secondsWhite = Math.floor(remainingTimeWhite / 1000);
+        var millisecondsWhite = Math.floor(remainingTimeWhite % 1000);
+        var minutesWhite = Math.floor(secondsWhite / 60);
+        var hoursWhite = Math.floor(minutesWhite / 60);
+
+        var formattedHoursWhite = ("0" + hoursWhite).slice(-2);
+        var formattedMinutesWhite = ("0" + (minutesWhite % 60)).slice(-2);
+        var formattedSecondsWhite = ("0" + (secondsWhite % 60)).slice(-2);
+        var formattedMillisecondsWhite = ("000" + millisecondsWhite).slice(-3, -2);
+
+        var formattedTimeWhite = formattedHoursWhite + ":" + formattedMinutesWhite + ":" + formattedSecondsWhite + "." + formattedMillisecondsWhite;
+
+        if (whiteRemainingTime < 0) {
+            formattedTimeWhite = "Время вышло";
+        }
+        else if (blackRemainingTime < 0) {
+            formattedTimeBlack = "Время вышло";
+        }
+
+        if (isWhiteUser) {
+            document.getElementById('timerTop').textContent = formattedTimeBlack;
+            document.getElementById('timerBottom').textContent = formattedTimeWhite;
+        }
+        else {
+            document.getElementById('timerTop').textContent = formattedTimeWhite;
+            document.getElementById('timerBottom').textContent = formattedTimeBlack;
+        }
+    }
+    function initTimer(endTimeWhite, endTimeBlack, lastMoveTime, isWhiteUser, isWhiteMove) {
+        clearInterval(timerInterval);
+        function updateTimerBlack() {
+            var remainingTimeBlack;
+            if (isWhiteMove) {
+                var timeDifference = Date.now() - lastMoveTime;
+                endTimeBlack = new Date(endTimeBlack.getTime() + timeDifference);
+                remainingTimeBlack = endTimeBlack - Date.now();
+            }
+            else {
+                remainingTimeBlack = endTimeBlack - Date.now();
+            }
+            var secondsBlack = Math.floor(remainingTimeBlack / 1000);
+            var millisecondsBlack = Math.floor(remainingTimeBlack % 1000);
+            var minutesBlack = Math.floor(secondsBlack / 60);
+            var hoursBlack = Math.floor(minutesBlack / 60);
+
+            var formattedHoursBlack = ("0" + hoursBlack).slice(-2);
+            var formattedMinutesBlack = ("0" + (minutesBlack % 60)).slice(-2);
+            var formattedSecondsBlack = ("0" + (secondsBlack % 60)).slice(-2);
+            var formattedMillisecondsBlack = ("000" + millisecondsBlack).slice(-3, -2);
+
+            var formattedTimeBlack = formattedHoursBlack + ":" + formattedMinutesBlack + ":" + formattedSecondsBlack + "." + formattedMillisecondsBlack;
+
+            if (isWhiteUser) {
+                document.getElementById('timerTop').textContent = formattedTimeBlack;
+                if (remainingTimeBlack <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('timerTop').textContent = "Время истекло";
+                    var data = {
+                        type: 'time-over',
+                    };
+                    socket.send(JSON.stringify(data));
+                    gameOver();
+                }
+            }
+            else {
+                document.getElementById('timerBottom').textContent = formattedTimeBlack;
+                if (remainingTimeBlack <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('timerBottom').textContent = "Время истекло";
+                    var data = {
+                        type: 'time-over',
+                    };
+                    socket.send(JSON.stringify(data));
+                    gameOver();
+                }
+            }
+        }
+        function updateTimerWhite() {
+            var remainingTimeWhite;
+            if (isWhiteMove) {
+                remainingTimeWhite = endTimeWhite - Date.now();
+            }
+            else {
+                var timeDifference = Date.now() - lastMoveTime;
+                endTimeWhite = new Date(endTimeWhite.getTime() + timeDifference);
+                remainingTimeWhite = endTimeWhite - Date.now();
+            }
+            var secondsWhite = Math.floor(remainingTimeWhite / 1000);
+            var millisecondsWhite = Math.floor(remainingTimeWhite % 1000);
+            var minutesWhite = Math.floor(secondsWhite / 60);
+            var hoursWhite = Math.floor(minutesWhite / 60);
+
+            var formattedHoursWhite = ("0" + hoursWhite).slice(-2);
+            var formattedMinutesWhite = ("0" + (minutesWhite % 60)).slice(-2);
+            var formattedSecondsWhite = ("0" + (secondsWhite % 60)).slice(-2);
+            var formattedMillisecondsWhite = ("000" + millisecondsWhite).slice(-3, -2);
+
+            var formattedTimeWhite = formattedHoursWhite + ":" + formattedMinutesWhite + ":" + formattedSecondsWhite + "." + formattedMillisecondsWhite;
+
+            if (isWhiteUser) {
+                document.getElementById('timerBottom').textContent = formattedTimeWhite;
+                if (remainingTimeWhite <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('timerBottom').textContent = "Время истекло";
+                    var data = {
+                        type: 'time-over',
+                    };
+                    socket.send(JSON.stringify(data));
+                    gameOver();
+                }
+            }
+            else {
+                document.getElementById('timerTop').textContent = formattedTimeWhite;
+                if (remainingTimeWhite <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('timerTop').textContent = "Время истекло";
+                    var data = {
+                        type: 'time-over',
+                    };
+                    socket.send(JSON.stringify(data));
+                    gameOver();
+                }
+            }
+        }
+        if (isWhiteMove) {
+            timerInterval = setInterval(updateTimerWhite, 2);
+            updateTimerBlack();
+        }
+        else {
+            timerInterval = setInterval(updateTimerBlack, 2);
+            updateTimerWhite();
         }
     }
 
@@ -252,7 +322,8 @@
         board.orientation('black');
     }
 
-    var is_white_user = true;
+    var timerInterval;
+    var isWhiteUser = true;
     var board = null;
     var game = null;
     var whiteSquareGrey = '#a9a9a9';
@@ -279,10 +350,10 @@
         // do not pick up pieces if the game is over
         if (game.game_over()) return false
 
-        if (is_white_user && game.turn() === 'b') {
+        if (isWhiteUser && game.turn() === 'b') {
             return false;
         }
-        else if (is_white_user === false && game.turn() === 'w') {
+        else if (isWhiteUser === false && game.turn() === 'w') {
             return false;
         }
 
@@ -308,21 +379,14 @@
         setTimeout(function () {
             // Check if the game is over (checkmate)
             if (game.in_checkmate()) {
-                var winner = game.turn() === 'w' ? 'Black' : 'White';
-                document.getElementById('gameOverWrapper').style.display = 'grid';
-                document.getElementById('gameOverTitleWrapper').innerText = "Checkmate!" + winner + " wins!";
+                gameOver();
             }
             getEvaluation();
         }, 150);
     }
 
     function onMouseoverSquare(square, piece) {
-        if (piece && piece.charAt(0) === 'b' && is_white_user) {
-            return;
-        }
-        else if (piece && piece.charAt(0) === 'w' && is_white_user == false) {
-            return;
-        }
+
         // get list of possible moves for this square
         var moves = game.moves({
             square: square,
@@ -345,6 +409,7 @@
     }
 
     function onSnapEnd() {
+        clearInterval(timerInterval);
         board.position(game.fen())
         const history = game.history();
         var move = history[history.length - 1];
@@ -413,7 +478,7 @@
         // Создаем новую доску с теми же конфигурационными значениями
         board = createChessboard(currentFEN);
 
-        if (is_white_user == false) {
+        if (isWhiteUser == false) {
             flipBoard();
         }
     });
@@ -446,9 +511,7 @@
         document.getElementById('gameSteps').innerText = pgnString;
         document.getElementById('gameSteps').scrollTop = document.getElementById('gameSteps').scrollHeight;
         if (game.in_checkmate()) {
-            var winner = game.turn() === 'w' ? 'Black' : 'White';
-            document.getElementById('gameOverWrapper').style.display = 'grid';
-            document.getElementById('gameOverTitleWrapper').innerText = "Checkmate!" + winner + " wins!";
+            gameOver();
         }
     }
 

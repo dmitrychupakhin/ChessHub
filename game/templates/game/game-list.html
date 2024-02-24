@@ -10,6 +10,9 @@
 {% endblock head %}
 
 {% block content %}
+<div class="loading-container" id="loadingContainer">
+    <div class="loading-spinner"></div>
+</div>
 <div class="content" id="content">
     <div class="picture-wrapper">
         <img src="{% static '/game/img/meme1.png' %}" class="meme1" alt="">
@@ -108,6 +111,7 @@
             for (let i = 0; i < open_games.length; i++) {
                 newRoom(open_games[i].game_id, open_games[i].isStarted, open_games[i].white_user === '{{ user.username }}' ? true : false);
             }
+            document.getElementById('loadingContainer').style.display = 'none';
         }
     }
     socket.onclose = function (event) {

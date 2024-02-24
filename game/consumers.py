@@ -22,6 +22,36 @@ def serialize_timedelta(obj):
         return obj.total_seconds()
     return None
 
+@database_sync_to_async
+def time_over(game_id):
+    game = ChessGame.objects.get(id=game_id)
+    if game.is_white_move:
+        if game.white_user_end_time < timezone.now():
+            game.is_finished = True
+            print('black win')
+        elif game.black_user_end_time + (timezone.now() - game.last_move_time ) < timezone.now():
+            game.is_finished = True
+            print('white win')
+        if game.is_finished:
+            if game.white_user_remaining_time == None:
+                game.white_user_remaining_time = game.white_user_end_time - timezone.now()
+            if game.black_user_remaining_time == None:
+                game.black_user_remaining_time = (game.black_user_end_time + (timezone.now() - game.last_move_time )) -  timezone.now()
+    else:
+        if game.white_user_end_time + (timezone.now() - game.last_move_time )  < timezone.now():
+            game.is_finished = True
+            print('black win')
+        elif game.black_user_end_time < timezone.now():
+            game.is_finished = True
+            print('white win') 
+        if game.is_finished:
+            if game.white_user_remaining_time == None:
+                game.white_user_remaining_time = game.white_user_end_time  + (timezone.now() - game.last_move_time ) - timezone.now() 
+            if game.black_user_remaining_time == None:
+                game.black_user_remaining_time = (game.black_user_end_time) - timezone.now()
+        
+    game.save()
+
 class GameConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_game_data(self, game_id):
@@ -31,16 +61,16 @@ class GameConsumer(AsyncWebsocketConsumer):
             'is_finished': game.is_finished,
             'white_user_remaining_time': serialize_timedelta(game.white_user_remaining_time),
             'black_user_remaining_time': serialize_timedelta(game.black_user_remaining_time),
+            'white_rematch': game.white_rematch,
+            'black_rematch': game.black_rematch,
             'white_user': game.white_user.username,
             'black_user': game.black_user.username,
             'is_white_move': game.is_white_move,
             'game_pgn': game.pgn,
             'last_move_time': serialize_datetime(game.last_move_time),
             'white_user_end_time': serialize_datetime(game.white_user_end_time),
-            'black_user_end_time': serialize_datetime(game.black_user_end_time)
+            'black_user_end_time': serialize_datetime(game.black_user_end_time),
         }
-        if game.is_finished:
-            game_data['white_user_end_time']
         return game_data
     
     async def connect(self):
@@ -50,7 +80,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
         await self.accept()
-
+        
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
             self.room_group_name,
@@ -65,30 +95,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         if type == 'game-data':
             game_id = self.scope['url_route']['kwargs']['game_id']
             game = await database_sync_to_async(ChessGame.objects.get)(id=game_id)
-            if game.is_white_move:
-                if game.white_user_end_time < timezone.now():
-                    game.is_finished = True
-                    print('black win')
-                elif game.black_user_end_time + (timezone.now() - game.last_move_time ) < timezone.now():
-                    game.is_finished = True
-                    print('white win')
-                if game.is_finished:
-                    game.white_user_remaining_time = timezone.now() - game.white_user_end_time
-                    game.black_user_remaining_time = timezone.now() - (game.black_user_end_time + (timezone.now() - game.last_move_time ))
-            else:
-                if game.white_user_end_time + (timezone.now() - game.last_move_time )  < timezone.now():
-                    game.is_finished = True
-                    print('black win')
-                elif game.black_user_end_time < timezone.now():
-                    game.is_finished = True
-                    print('white win') 
-                if game.is_finished:
-                    game.white_user_remaining_time = timezone.now() - game.white_user_end_time  + (timezone.now() - game.last_move_time )
-                    game.black_user_remaining_time = timezone.now() - (game.black_user_end_time)
 
-            await database_sync_to_async(game.save)()
+            await time_over(game_id)
         
-            
             game_data = await self.get_game_data(game_id)
             await self.send(
                 text_data=json.dumps({
@@ -96,27 +105,10 @@ class GameConsumer(AsyncWebsocketConsumer):
                     'game_data': game_data,
                 })
             )
-        elif type == 'end-game':
+        elif type == 'time-over':
             game_id = self.scope['url_route']['kwargs']['game_id']
-            self.room_group_name = game_id
-            game = await database_sync_to_async(ChessGame.objects.get)(id=game_id)
             
-            if game.is_white_move:
-                if game.white_user_end_time < timezone.now():
-                    game.is_finished = True
-                    print('black win')
-                elif game.black_user_end_time + (timezone.now() - game.last_move_time ) < timezone.now():
-                    game.is_finished = True
-                    print('white win')
-            else:
-                if game.white_user_end_time + (timezone.now() - game.last_move_time )  < timezone.now():
-                    game.is_finished = True
-                    print('black win')
-                elif game.black_user_end_time < timezone.now():
-                    game.is_finished = True
-                    print('white win') 
-
-            await database_sync_to_async(game.save)()
+            await time_over(game_id)
             
         elif type == 'rematch':
             game_id = self.scope['url_route']['kwargs']['game_id']
@@ -134,8 +126,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 elif game_data['black_user'] == user.username:
                     game.black_rematch = True
                     
-                
-            
             await database_sync_to_async(game.save)()
             
             if game.white_rematch and game.black_rematch:
@@ -156,7 +146,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 new_game.black_user_end_time = new_game.start_time + new_game.total_game_time
                 new_game.white_user = black_user
                 new_game.black_user = white_user
-                
                 
                 await database_sync_to_async(new_game.save)()
                 
@@ -182,33 +171,22 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.room_group_name = game_id
             game = await database_sync_to_async(ChessGame.objects.get)(id=game_id)
             
-            if game.is_white_move:
-                if game.white_user_end_time < timezone.now():
-                    game.is_finished = True
-                    print('black win')
-                elif game.black_user_end_time + (timezone.now() - game.last_move_time ) < timezone.now():
-                    game.is_finished = True
-                    print('white win')
-            else:
-                if game.white_user_end_time + (timezone.now() - game.last_move_time )  < timezone.now():
-                    game.is_finished = True
-                    print('black win')
-                elif game.black_user_end_time < timezone.now():
-                    game.is_finished = True
-                    print('white win') 
-
-            if game.is_finished:
-                return
-            
             game_data = await self.get_game_data(game_id)
             
             time_now = timezone.now() 
             
+            await time_over(game_id)
+            
+            if game.is_finished:
+                return
+            
             if game.is_white_move:
-                game.white_user_end_time += game.move_increment + (time_now - game.last_move_time)
+                game.black_user_end_time += (time_now - game.last_move_time)
+                game.white_user_end_time += game.move_increment
                 user = game_data['white_user']
             else:
-                game.black_user_end_time += game.move_increment + (time_now - game.last_move_time)
+                game.black_user_end_time += game.move_increment
+                game.white_user_end_time += (time_now - game.last_move_time)
                 user = game_data['black_user']
             
             game.last_move_time = time_now
@@ -223,8 +201,12 @@ class GameConsumer(AsyncWebsocketConsumer):
                 game.is_finished = True
             
             if game.is_finished:
-                game.white_user_remaining_time = timezone.now() - game.white_user_end_time  + (timezone.now() - game.last_move_time )
-                game.black_user_remaining_time = timezone.now() - (game.black_user_end_time)
+                if game.is_white_move:
+                    game.white_user_remaining_time = game.white_user_end_time  + (timezone.now() - game.last_move_time ) -  timezone.now() 
+                    game.black_user_remaining_time = game.black_user_end_time - timezone.now()
+                else:
+                    game.white_user_remaining_time = game.white_user_end_time  + (timezone.now() - game.last_move_time ) - timezone.now()
+                    game.black_user_remaining_time = game.black_user_end_time - timezone.now()
             
             game.pgn = data['gamePGN']
             game.is_white_move = not game.is_white_move
@@ -237,10 +219,11 @@ class GameConsumer(AsyncWebsocketConsumer):
                     'user': user,
                     'move': data['move'],
                     'white_user_end_time': serialize_datetime(game.white_user_end_time),
-                    'black_user_end_time': serialize_datetime(game.black_user_end_time)
+                    'black_user_end_time': serialize_datetime(game.black_user_end_time),
+                    'last_move_time': serialize_datetime(game.last_move_time),
+                    'is_white_move': game.is_white_move
                 }
             )
-
             
     async def game_move(self, event):
         event['type'] = 'game-move'
@@ -291,6 +274,37 @@ class HomeConsumer(AsyncWebsocketConsumer):
     def get_current_games(self, user):
         current_games = ChessGame.objects.filter(
             Q(white_user=user) | Q(black_user=user),
+            is_finished=False, 
+        )
+        for current_game in current_games:
+            game = ChessGame.objects.get(id=current_game.pk)
+            if game.is_white_move:
+                if game.white_user_end_time < timezone.now():
+                    game.is_finished = True
+                    print('black win')
+                elif game.black_user_end_time + (timezone.now() - game.last_move_time ) < timezone.now():
+                    game.is_finished = True
+                    print('white win')
+                if game.is_finished:
+                    if game.white_user_remaining_time == None:
+                        game.white_user_remaining_time = game.white_user_end_time - timezone.now()
+                    if game.black_user_remaining_time == None:
+                        game.black_user_remaining_time = (game.black_user_end_time + (timezone.now() - game.last_move_time )) -  timezone.now()
+            else:
+                if game.white_user_end_time + (timezone.now() - game.last_move_time )  < timezone.now():
+                    game.is_finished = True
+                    print('black win')
+                elif game.black_user_end_time < timezone.now():
+                    game.is_finished = True
+                    print('white win') 
+                if game.is_finished:
+                    if game.white_user_remaining_time == None:
+                        game.white_user_remaining_time = game.white_user_end_time  + (timezone.now() - game.last_move_time ) - timezone.now() 
+                    if game.black_user_remaining_time == None:
+                        game.black_user_remaining_time = (game.black_user_end_time) - timezone.now()
+                
+            game.save()
+        current_games = current_games.filter(
             is_finished=False, 
         )
         current_games_list = [

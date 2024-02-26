@@ -37,8 +37,9 @@
         </div>
     </div>
     <div class="display-wrapper">
-        <div class="game-steps" id="gameSteps">
-            none
+        <div class="game-steps-wrapper">
+            <div class="game-steps-wrapper__title title">Moves</div>
+            <div class="game-steps" id="gameSteps"></div>
         </div>
         <div class="evaluation">
             <div class="evaluation_title">Evaluation: </div>
@@ -46,17 +47,14 @@
         </div>
         <div class="display-buttons">
             <button class="display-button">Draw</button>
+            <button class="display-button">Resign</button>
         </div>
         <div class="chat">
-            <div class="messages">
-                <div class="message">
-                    <div class="message-user">aboba</div>
-                    <div class="message-text">Привет!</div>
-                </div>
+            <div class="messages" id="messages">
             </div>
             <div class="chat-form">
-                <input class="chat-input" type="text">
-                <button class="chat-button">Send!</button>
+                <input class="chat-input" id="chatInput" type="text">
+                <button class="chat-button" id="chatButton">Send!</button>
             </div>
         </div>
     </div>
@@ -76,6 +74,17 @@
     b2.addEventListener('click', function () {
         var data = {
             type: 'rematch',
+        };
+        socket.send(JSON.stringify(data));
+    });
+
+    var chatButton = document.getElementById('chatButton');
+    chatButton.addEventListener('click', function () {
+        message = document.getElementById('chatInput').value;
+        document.getElementById('chatInput').value = '';
+        var data = {
+            type: 'message',
+            'message': message,
         };
         socket.send(JSON.stringify(data));
     });
@@ -116,6 +125,12 @@
             }
             document.getElementById('loadingContainer').style.display = 'none';
         }
+        else if (data.type === 'message') {
+            var message = data.message;
+            var user = data.user;
+
+            newMessage(message, user);
+        }
         else if (data.type === 'rematch') {
             if (data.game_id) {
                 window.location.replace(`/game/${data.game_id}/`);
@@ -142,6 +157,7 @@
     };
     socket.onclose = function (event) {
         console.log('WebSocket connection closed:', event);
+        location.reload();
     };
     function initGame(userIsWhite, whiteUser, blackUser) {
         if (userIsWhite) {
@@ -316,6 +332,26 @@
             timerInterval = setInterval(updateTimerBlack, 2);
             updateTimerWhite();
         }
+    }
+
+    function newMessage(message, user) {
+        var messageElement = document.createElement('div');
+        messageElement.classList.add('message');
+
+        var messageUser = document.createElement('div');
+        messageUser.innerText = '[' + user + ']';
+        messageUser.classList.add('message-user');
+
+        var messageText = document.createElement('div');
+        messageText.innerText = message;
+        messageText.classList.add('message-text');
+
+        messageElement.appendChild(messageUser);
+        messageElement.appendChild(messageText);
+
+        document.getElementById('messages').appendChild(messageElement);
+
+        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
     }
 
     function flipBoard() {

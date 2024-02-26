@@ -105,6 +105,19 @@ class GameConsumer(AsyncWebsocketConsumer):
                     'game_data': game_data,
                 })
             )
+        elif type == 'message':
+            user = self.scope['user']
+            message = data['message']
+            
+            await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'message',
+                        'user': user.username,
+                        'message': message
+                    }
+                )
+            
         elif type == 'time-over':
             game_id = self.scope['url_route']['kwargs']['game_id']
             
@@ -232,6 +245,10 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def rematch(self, event):
         event['type'] = 'rematch'
         await self.send(text_data=json.dumps(event))
+        
+    async def message(self, event):
+        event['type'] = 'message'
+        await self.send(text_data=json.dumps(event))
             
 
 class HomeConsumer(AsyncWebsocketConsumer):
@@ -258,6 +275,7 @@ class HomeConsumer(AsyncWebsocketConsumer):
             Q(white_user=user) | Q(black_user=user)).filter(
                 is_started=False, 
                 is_finished=False, 
+                is_public=True,
             )
         open_games_list = [
             {
@@ -278,31 +296,32 @@ class HomeConsumer(AsyncWebsocketConsumer):
         )
         for current_game in current_games:
             game = ChessGame.objects.get(id=current_game.pk)
-            if game.is_white_move:
-                if game.white_user_end_time < timezone.now():
-                    game.is_finished = True
-                    print('black win')
-                elif game.black_user_end_time + (timezone.now() - game.last_move_time ) < timezone.now():
-                    game.is_finished = True
-                    print('white win')
-                if game.is_finished:
-                    if game.white_user_remaining_time == None:
-                        game.white_user_remaining_time = game.white_user_end_time - timezone.now()
-                    if game.black_user_remaining_time == None:
-                        game.black_user_remaining_time = (game.black_user_end_time + (timezone.now() - game.last_move_time )) -  timezone.now()
-            else:
-                if game.white_user_end_time + (timezone.now() - game.last_move_time )  < timezone.now():
-                    game.is_finished = True
-                    print('black win')
-                elif game.black_user_end_time < timezone.now():
-                    game.is_finished = True
-                    print('white win') 
-                if game.is_finished:
-                    if game.white_user_remaining_time == None:
-                        game.white_user_remaining_time = game.white_user_end_time  + (timezone.now() - game.last_move_time ) - timezone.now() 
-                    if game.black_user_remaining_time == None:
-                        game.black_user_remaining_time = (game.black_user_end_time) - timezone.now()
-                
+            if game.is_started:
+                if game.is_white_move:
+                    if game.white_user_end_time < timezone.now():
+                        game.is_finished = True
+                        print('black win')
+                    elif game.black_user_end_time + (timezone.now() - game.last_move_time ) < timezone.now():
+                        game.is_finished = True
+                        print('white win')
+                    if game.is_finished:
+                        if game.white_user_remaining_time == None:
+                            game.white_user_remaining_time = game.white_user_end_time - timezone.now()
+                        if game.black_user_remaining_time == None:
+                            game.black_user_remaining_time = (game.black_user_end_time + (timezone.now() - game.last_move_time )) -  timezone.now()
+                else:
+                    if game.white_user_end_time + (timezone.now() - game.last_move_time )  < timezone.now():
+                        game.is_finished = True
+                        print('black win')
+                    elif game.black_user_end_time < timezone.now():
+                        game.is_finished = True
+                        print('white win') 
+                    if game.is_finished:
+                        if game.white_user_remaining_time == None:
+                            game.white_user_remaining_time = game.white_user_end_time  + (timezone.now() - game.last_move_time ) - timezone.now() 
+                        if game.black_user_remaining_time == None:
+                            game.black_user_remaining_time = (game.black_user_end_time) - timezone.now()
+                    
             game.save()
         current_games = current_games.filter(
             is_finished=False, 
@@ -335,11 +354,22 @@ class HomeConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
         type = data['type']
+        print(data)
         if type == 'new-game':
             user = self.scope["user"]
             chess_game = await database_sync_to_async(ChessGame.objects.create)(white_user=user,
                 total_game_time=timedelta(minutes=int(data['game_time'])),
-                move_increment=timedelta(seconds=int(data['step_time'])))
+                move_increment=timedelta(seconds=int(data['step_time'])),
+                is_public=data['is_public'])
+            if data['is_public'] == 0:
+                await self.send(
+                    text_data=json.dumps({
+                        'type': 'new-game',
+                        'game_id': chess_game.pk,
+                        'white_user': user.username,
+                    })
+                )
+                return
             await self.channel_layer.group_send(
                 'home',
                 {

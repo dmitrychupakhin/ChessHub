@@ -7,7 +7,7 @@
     grid-gap: 20px;
     font-size: 40px;
     height: 100%;
-    padding: 0% 15%;
+    padding: 0% 12%;
     overflow: auto;
     align-items: center;
     justify-content: center;
@@ -58,7 +58,7 @@
         }
 }
 
-.menu-wrapper{
+.menu{
     grid-area: menu;
     display: grid;
     margin: 20% 0px;
@@ -66,7 +66,7 @@
     grid-gap: 10px;
 }
 
-.title{
+.menu__title{
     color: rgb(248, 238, 225);
     font-family: 'Open Sans', sans-serif;
     font-size: 50px;
@@ -86,7 +86,7 @@
 }
 
 
-.menu-button{
+.menu__button{
     font-size: 25px;
     border-radius: 4px;
     color:rgb(248, 238, 225) ;
@@ -94,42 +94,43 @@
     background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
     box-shadow: 4px 4px 0px rgb(35, 68, 110);
     padding: 20px;
+    transition-duration: 0.4s;
 }
 
-.online-button {
+.menu__button:hover{
+    box-shadow: 3px 3px 0px rgb(35, 68, 110);
+}
+
+.menu__button_red {
     background: linear-gradient(to right, rgb(239, 104, 80), rgb(220, 82, 58));
     box-shadow: 4px 4px 0px rgb(183, 101, 54);
 }
-#myBoard .board-b72b1 {
+
+.menu__button_red:hover {
+    box-shadow: 3px 3px 0px rgb(183, 101, 54);
+}
+
+#chessBoard .board-b72b1 {
     border: none;
     margin: auto;
 }
 
-#myBoard .black-3c85d {
+#chessBoard .black-3c85d {
     background-color: rgb(52, 98, 160);
     background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
 }
 
-#myBoard .white-1e1d7 {
+#chessBoard .white-1e1d7 {
     background-color: rgb(248, 238, 225);
-}
-
-.new-room-wrapper {
-    background: linear-gradient(to bottom right, rgb(52, 98, 160), rgb(26, 67, 121));
-    box-shadow: 4px 4px 0px rgb(35, 68, 110);
-    grid-area: new-room;
-    display: none;
-    flex-direction: column;
-    border-radius: 0px;
 }
 
 .chess-board-wrapper {
     padding: 10px;
-        border-radius: 4px;
-        color: rgb(248, 238, 225);
-        aspect-ratio: 1;
+    border-radius: 4px;
+    color: rgb(248, 238, 225);
+    aspect-ratio: 1;
     background-color: rgb(255, 134, 113);
-    box-shadow: 4px 4px 0px rgb(183, 101, 54);
+    box-shadow: 3px 3px 0px rgba(183, 101, 54, 0.8);
     background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
     display: grid;
     grid-area: board;

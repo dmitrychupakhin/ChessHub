@@ -5,5 +5,6 @@ from django.urls import path
 urlpatterns = [
     path('game-list/', GameListView.as_view(), name='game-list'),
     path('game/<int:game_id>/', GameView.as_view(), name='game'),
-    path('', GameHomeView.as_view(), name='game-home')
+    path('', GameHomeView.as_view(), name='game-home'),
+    path('game-computer/', GameComputerView.as_view(), name='game-computer')
 ]

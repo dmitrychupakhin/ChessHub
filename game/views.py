@@ -15,3 +15,7 @@ class GameView(TemplateView):
         game_id = self.kwargs.get('game_id')
         context['game_id'] = game_id
         return context
+
+class GameComputerView(TemplateView):
+    template_name = 'game/game-computer.html'
+    

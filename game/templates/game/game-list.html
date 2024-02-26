@@ -14,49 +14,49 @@
     <div class="loading-spinner"></div>
 </div>
 <div class="content" id="content">
-    <div class="picture-wrapper">
-        <img src="{% static '/game/img/meme1.png' %}" class="meme1" alt="">
+    <div class="chess-board-wrapper">
+        <div class="chess-board" id="chessBoard"></div>
     </div>
-    <div class="rooms-wrapper" id="rooms-wrapper">
-        <div class="title">Games</div>
-    </div>
-
-    <div class="current-room-wrapper" id="current-room-wrapper">
-        <div class="title">My Game</div>
-    </div>
-
-    <div class="new-room-wrapper" id="new-room-wrapper">
-        <div class="new-room-title title">New Game</div>
-        <div class="game-time">
-            <div class="game-time-text">Minutes per side: </div>
-            <div id="game-time-value" class="buy-in-value">1</div>
+    <div class="display-wrapper">
+        <div class="rooms-wrapper">
+            <div class="rooms-wrapper__title title">Games</div>
+            <div class="rooms" id="rooms"></div>
         </div>
-        <input class="range" type="range" id="game-time-slider" min="1" max="180" step="1" value="0">
-        <div class="step-time">
-            <div class="step-time-text">Increment in seconds: </div>
-            <div id="step-time-value" class="limits-value">0</div>
+        <div class="current-room-wrapper" id="currentRoomWrapper">
+            <div class="current-room-wrapper__title title">My Game</div>
         </div>
-        <input class="range" type="range" id="step-time-slider" min="0" max="180" step="1" value="0">
-        <div class="user-limits">
-            <label class="user-limit" id="public-label">
-                <input class="radio-button" type="radio" name="public" checked>
-                Public
-            </label>
-            <label class="user-limit">
-                <input class="radio-button" type="radio" name="public">
-                Private
-            </label>
+        <div class="new-room-wrapper" id="newRoomWrapper">
+            <div class="new-room-title title">New Game</div>
+            <div class="game-time">
+                <div class="game-time__text">Minutes per side: </div>
+                <div id="gameTimeValue" class="value">1</div>
+            </div>
+            <input class="new-room-wrapper__range" type="range" id="game-time-slider" min="1" max="180" step="1"
+                value="0">
+            <div class="step-time">
+                <div class="step-time__text">Increment in seconds: </div>
+                <div id="stepTimeValue" class="value">0</div>
+            </div>
+            <input class="new-room-wrapper__range" type="range" id="step-time-slider" min="0" max="180" step="1"
+                value="0">
+            <div class="user-limits">
+                <label class="user-limit" id="public-label">
+                    <input class="radio-button" id="radio1" type="radio" name="public" checked>
+                    <label for="radio1">Public</label>
+                </label>
+                <label class="user-limit">
+                    <input class="radio-button" id="radio2" type="radio" name="public">
+                    <label for="radio2">Private</label>
+                </label>
+            </div>
+            <button class="new-room-button" id="new-room-button" onclick="createNewGame()">Create</button>
         </div>
-        <button class="new-room-button" id="new-room-button" onclick="createNewGame()">Create</button>
     </div>
 </div>
+<script src="{% static 'game/js/chess.js' %}"></script>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"
-    integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD"
-    crossorigin="anonymous"></script>
+<script src="{% static 'game/js/chessboard-1.0.0.min.js' %}"></script>
 <script>
-
-
     const socket = new WebSocket(`ws://${window.location.host}/ws/home/`);
 
     socket.onopen = (event) => {
@@ -82,14 +82,14 @@
         else if (data.type === 'remove-game') {
             document.getElementById(data.game_id).remove();
             if (data.white_user == '{{ user.username }}') {
-                document.getElementById('current-room-wrapper').style.display = 'none';
-                document.getElementById('new-room-wrapper').style.display = 'flex';
+                document.getElementById('currentRoomWrapper').style.display = 'none';
+                document.getElementById('newRoomWrapper').style.display = 'grid';
             }
         }
         else if (data.type === 'new-game') {
             if (data.white_user == '{{ user.username }}') {
-                document.getElementById('current-room-wrapper').style.display = 'grid';
-                document.getElementById('new-room-wrapper').style.display = 'none';
+                document.getElementById('currentRoomWrapper').style.display = 'grid';
+                document.getElementById('newRoomWrapper').style.display = 'none';
             }
 
             newRoom(data.game_id, false, data.white_user === '{{ user.username }}' ? true : false);
@@ -99,14 +99,14 @@
             var open_games = data.open_games;
 
             if (current_games.length) {
-                document.getElementById('current-room-wrapper').style.display = 'grid';
+                document.getElementById('currentRoomWrapper').style.display = 'grid';
 
                 for (let i = 0; i < current_games.length; i++) {
                     newRoom(current_games[i].game_id, current_games[i].is_started, current_games[i].white_user === '{{ user.username }}' ? true : false);
                 }
             }
             else {
-                document.getElementById('new-room-wrapper').style.display = 'flex';
+                document.getElementById('newRoomWrapper').style.display = 'grid';
             }
             for (let i = 0; i < open_games.length; i++) {
                 newRoom(open_games[i].game_id, open_games[i].isStarted, open_games[i].white_user === '{{ user.username }}' ? true : false);
@@ -116,6 +116,7 @@
     }
     socket.onclose = function (event) {
         console.log('WebSocket connection closed:', event);
+        location.reload();
     };
 
     function newRoom(roomId, isStarted, isOwner) {
@@ -136,21 +137,20 @@
         if (isStarted) {
 
             roomButtonElement.addEventListener('click', connect);
-
-            document.getElementById('current-room-wrapper').appendChild(roomElement);
+            roomElement.classList.add('room_current');
+            document.getElementById('currentRoomWrapper').appendChild(roomElement);
             roomButtonElement.textContent = "Сonnect";
-            roomButtonElement.style.backgroundColor = "rgb(218,69,83)";
             roomButtonElement.classList.add('joined');
         }
         else if (isOwner) {
             roomButtonElement.addEventListener('click', function () {
                 leaveRoom(roomId);
             });
-            document.getElementById('current-room-wrapper').appendChild(roomElement);
+            document.getElementById('currentRoomWrapper').appendChild(roomElement);
             roomButtonElement.textContent = "Leave";
         }
         else {
-            var roomsWrapper = document.getElementById('rooms-wrapper');
+            var roomsWrapper = document.getElementById('rooms');
             roomsWrapper.appendChild(roomElement);
             roomButtonElement.addEventListener('click', function () {
                 joinRoom(roomId);
@@ -195,11 +195,142 @@
     var stepTimeSlider = document.getElementById('step-time-slider');
     gameTimeSlider.addEventListener('input', (event) => {
         const selectedValue = event.target.value;
-        document.getElementById('game-time-value').textContent = selectedValue;
+        document.getElementById('gameTimeValue').textContent = selectedValue;
     });
     stepTimeSlider.addEventListener('input', (event) => {
         const selectedValue = event.target.value;
-        document.getElementById('step-time-value').textContent = selectedValue;
+        document.getElementById('stepTimeValue').textContent = selectedValue;
+    });
+
+    var board = null
+    var game = new Chess()
+    var whiteSquareGrey = '#a9a9a9'
+    var blackSquareGrey = '#696969'
+    var flipped = false;
+
+    function removeGreySquares() {
+        $('#chessBoard .square-55d63').css('background', '')
+    }
+
+    function greySquare(square) {
+        var $square = $('#chessBoard .square-' + square)
+
+        var background = whiteSquareGrey
+        if ($square.hasClass('black-3c85d')) {
+            background = blackSquareGrey
+        }
+
+        $square.css('background', background)
+    }
+
+    function flipBoard() {
+        flipped = !flipped;
+        board.orientation(flipped ? 'black' : 'white');
+    }
+
+    function onDragStart(source, piece) {
+        // do not pick up pieces if the game is over
+        if (game.game_over()) return false
+
+        // or if it's not that side's turn
+        if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+            (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+            return false
+        }
+        highlightSquare(source, 'orange');
+    }
+
+    function highlightSquare(square, color) {
+        var squareEl = $('#chessBoard .square-' + square);
+
+        // Ваш код для изменения цвета подсветки
+        squareEl.css('swadow-color', color);
+    }
+
+    function onDrop(source, target) {
+        removeGreySquares()
+
+        // see if the move is legal
+        var move = game.move({
+            from: source,
+            to: target,
+            promotion: 'q' // NOTE: always promote to a queen for example simplicity
+        })
+
+        // illegal move
+        if (move === null) return 'snapback'
+        setTimeout(function () {
+            // Check if the game is over (checkmate)
+            if (game.in_checkmate()) {
+                var winner = game.turn() === 'w' ? 'Black' : 'White';
+                alert("Checkmate!" + winner + " wins!");
+                game.reset();
+                board.position('start');
+            } else {
+                // Toggle board orientation after each move
+                flipBoard();
+            }
+        }, 150);
+    }
+
+    function onMouseoverSquare(square, piece) {
+        // get list of possible moves for this square
+        var moves = game.moves({
+            square: square,
+            verbose: true
+        })
+
+        // exit if there are no moves available for this square
+        if (moves.length === 0) return
+
+        // highlight the square they moused over
+        greySquare(square)
+
+        // highlight the possible squares for this piece
+        for (var i = 0; i < moves.length; i++) {
+            greySquare(moves[i].to)
+        }
+    }
+
+    function onMouseoutSquare(square, piece) {
+        removeGreySquares()
+    }
+
+    function onSnapEnd() {
+        board.position(game.fen())
+    }
+
+    var config = {
+        draggable: true,
+        position: 'start',
+        pieceTheme: "{% static '/game/img/chesspieces/wikipedia/' %}" + '{piece}.png',
+        sparePieces: false,
+        showNotation: false,
+        onDragStart: onDragStart,
+        onDrop: onDrop,
+        onMouseoutSquare: onMouseoutSquare,
+        onMouseoverSquare: onMouseoverSquare,
+        onSnapEnd: onSnapEnd,
+    };
+
+    var board = Chessboard('chessBoard', config);
+
+    var currentFEN = '';
+
+    var createChessboard = function (fen) {
+        return Chessboard('chessBoard', {
+            ...config,
+            position: fen || 'start' // Используем переданный FEN или 'start', если FEN не предоставлен
+        });
+    };
+
+
+    window.addEventListener('resize', function () {
+        currentFEN = board.fen();
+        // Удаляем или скрываем предыдущую доску
+        board.destroy();
+        // Создаем новую доску с теми же конфигурационными значениями
+        board = createChessboard(currentFEN);
     });
 </script>
 {% endblock content %}

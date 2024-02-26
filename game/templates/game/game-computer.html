@@ -1,0 +1,321 @@
+{% extends "game/game-base.html" %}
+{% load static %}
+
+{% block head %}
+<link type="text/css" href="{% static 'game/css/game-base.css' %}" rel="stylesheet">
+<link type="text/css" href="{% static 'game/css/game-computer.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
+    integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous">
+<title>ChessHub</title>
+{% endblock head %}
+
+{% block content %}
+<div class="loading-container" id="loadingContainer">
+    <div class="loading-spinner"></div>
+</div>
+<div class="content">
+    <div class="chess-wrapper">
+        <div class="board-top">
+            <div class="bot">bot</div>
+            <div class="username-top" id="username-top">Bob</div>
+        </div>
+        <div class="chess-board-wrapper">
+            <div id="myBoard" class="chess-board"></div>
+        </div>
+        <div class="board-bottom">
+            <div class="username-top" id="username-bottom">{{ user.username}}</div>
+        </div>
+    </div>
+    <div class="display-wrapper">
+        <div class="range">
+            <div class="range__text" id="rangeText">Bot Skill : 0</div>
+            <input class="range__input" type="range" id="botSkillLevel" min="0" max="20" step="1" value="0">
+        </div>
+        <div class="game-steps" id="gameSteps">
+        </div>
+        <div class="evaluation">
+            <div class="evaluation_title">Evaluation: </div>
+            <div class="evaluation_value" id="evaluationValue">0.00</div>
+        </div>
+        <div class="display-buttons">
+            <button class="display-button">Draw</button>
+        </div>
+    </div>
+</div>
+<script src="{% static 'game/js/chess.js' %}"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="{% static 'game/js/chessboard-1.0.0.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish-nnue-16.min.js"></script>
+<script>
+
+    var gameTimeSlider = document.getElementById('botSkillLevel');
+    gameTimeSlider.addEventListener('input', (event) => {
+        const selectedValue = event.target.value;
+        document.getElementById('rangeText').textContent = "Bot Skill : " + selectedValue;
+    });
+
+    document.getElementById('loadingContainer').style.display = 'none';
+
+    function flipBoard() {
+        var currentOrientation = board.orientation();
+
+        // Перевернуть доску
+        if (currentOrientation === 'white') {
+            board.orientation('black');
+        } else {
+            board.orientation('white');
+        }
+    }
+
+    var timerInterval;
+    var isWhiteUser = true;
+    var board = null;
+    var game = new Chess();
+    var whiteSquareGrey = '#a9a9a9';
+    var blackSquareGrey = '#696969';
+
+    function removeGreySquares() {
+        $('#myBoard .square-55d63').css('background', '')
+    }
+
+    function greySquare(square) {
+        var $square = $('#myBoard .square-' + square)
+
+        var background = whiteSquareGrey
+        if ($square.hasClass('black-3c85d')) {
+            background = blackSquareGrey
+        }
+
+        $square.css('background', background)
+    }
+
+
+    function onDragStart(source, piece) {
+
+        // do not pick up pieces if the game is over
+        if (game.game_over()) return false
+        if (isWhiteUser && game.turn() === 'b') {
+            return false;
+        }
+        else if (isWhiteUser === false && game.turn() === 'w') {
+            return false;
+        }
+
+        // or if it's not that side's turn
+        if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+            (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+            return false
+        }
+    }
+
+    function onDrop(source, target) {
+        removeGreySquares()
+        // see if the move is legal
+        var move = game.move({
+            from: source,
+            to: target,
+            promotion: 'q' // NOTE: always promote to a queen for example simplicity
+        })
+
+        // illegal move
+        if (move === null) return 'snapback'
+
+        getEvaluation();
+
+        setTimeout(function () {
+            // Check if the game is over (checkmate)
+            if (game.in_checkmate()) {
+                var winner = game.turn() === 'w' ? 'Black' : 'White';
+                alert("Checkmate!" + winner + " wins!");
+                game.reset();
+                board.position('start');
+                flipBoard();
+                isWhiteUser = !isWhiteUser;
+            }
+        }, 150);
+
+        window.setTimeout(function () {
+            makeBotMove(document.getElementById('botSkillLevel').value);
+        }, 250);
+    }
+
+    function onMouseoverSquare(square, piece) {
+
+        // get list of possible moves for this square
+        var moves = game.moves({
+            square: square,
+            verbose: true
+        })
+        // exit if there are no moves available for this square
+        if (moves.length === 0) return
+        // highlight the square they moused over
+        greySquare(square)
+
+        // highlight the possible squares for this piece
+        for (var i = 0; i < moves.length; i++) {
+            greySquare(moves[i].to)
+        }
+
+    }
+
+    function onMouseoutSquare(square, piece) {
+        removeGreySquares()
+    }
+
+    function onSnapEnd() {
+        clearInterval(timerInterval);
+        board.position(game.fen())
+        const history = game.history();
+        var move = history[history.length - 1];
+        var gamePGN = game.pgn(true);
+        var moves = gamePGN.split(' ');
+        updateMoveList();
+    }
+
+
+    var config = {
+        draggable: true,
+        position: 'start',
+        pieceTheme: "{% static '/game/img/chesspieces/wikipedia/' %}" + '{piece}.png',
+        sparePieces: false,
+        showNotation: true,
+        onDragStart: onDragStart,
+        onDrop: onDrop,
+        onMouseoutSquare: onMouseoutSquare,
+        onMouseoverSquare: onMouseoverSquare,
+        onSnapEnd: onSnapEnd,
+    };
+
+    var board = Chessboard('myBoard', config);
+
+    var boardElement = document.getElementById('myBoard');
+
+    boardElement.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        var touch = e.touches[0];
+        onDragStart(board, touch);
+        isDragging = true;
+    }, false);
+
+    boardElement.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+        if (isDragging) {
+            var touch = e.touches[0];
+            onDrop(board, touch);
+        }
+    }, false);
+
+    boardElement.addEventListener('touchend', function (e) {
+        e.preventDefault();
+        isDragging = false;
+    }, false);
+
+    var currentFEN = '';
+
+    var createChessboard = function (fen) {
+        return Chessboard('myBoard', {
+            ...config,
+            position: fen || 'start' // Используем переданный FEN или 'start', если FEN не предоставлен
+        });
+    };
+
+    window.addEventListener('resize', function () {
+        currentFEN = board.fen();
+        // Удаляем или скрываем предыдущую доску
+        board.destroy();
+        // Создаем новую доску с теми же конфигурационными значениями
+        board = createChessboard(currentFEN);
+
+        if (isWhiteUser == false) {
+            flipBoard();
+        }
+    });
+
+    var stockfish = new Worker("{% static 'game/js/stockfish.js' %}");
+    stockfish.postMessage('uci');
+    stockfish.postMessage('ucinewgame');
+
+    function makeBotMove(difficulty) {
+        var fen = game.fen();
+        stockfish.postMessage('position fen ' + fen);
+        stockfish.postMessage(`setoption name Skill Level value ${difficulty}`);
+        //stockfish.postMessage('setoption name UCI_LimitStrength value true');
+        //stockfish.postMessage(`setoption name UCI_Elo value ${difficulty}`);
+        stockfish.postMessage('go movetime 1000');
+        stockfish.onmessage = function (event) {
+            console.log(event);
+            if (event && typeof event.data === 'string') {
+                if (event.data.startsWith('bestmove')) {
+                    var move = event.data.split(' ')[1];
+                    const from = move.slice(0, 2);
+                    const to = move.slice(2, 4);
+                    game.move({
+                        from,
+                        to,
+                        promotion: 'q',
+                    });
+                    board.position(game.fen());
+                    updateMoveList();
+                    setTimeout(function () {
+                        // Check if the game is over (checkmate)
+                        if (game.in_checkmate()) {
+                            var winner = game.turn() === 'w' ? 'Black' : 'White';
+                            alert("Checkmate!" + winner + " wins!");
+                            game.reset();
+                            board.position('start');
+                            flipBoard();
+                            isWhiteUser = !isWhiteUser;
+                            console.log(isWhiteUser);
+                            if (isWhiteUser == false) {
+                                makeBotMove(document.getElementById('botSkillLevel').value);
+                            }
+                        }
+                    }, 500);
+                }
+            }
+        };
+    }
+
+    function updateMoveList() {
+        var pgnString = "";
+
+        // Получаем массив ходов
+        var moves_verbose = game.history({ verbose: true });
+
+        // Добавляем каждый ход в строку
+        for (var i = 0; i < moves_verbose.length; i++) {
+            if (i % 2 === 0) {
+                // Добавляем номер хода, если это первый ход пары
+                pgnString += ((i / 2) + 1) + ". ";
+            }
+
+            // Добавляем алгебраическую нотацию хода
+            pgnString += moves_verbose[i].san + " ";
+
+            // Добавляем перевод строки после второго хода пары
+            if (i % 2 === 1) {
+                pgnString += "\n";
+            }
+        }
+        document.getElementById('gameSteps').innerText = pgnString;
+        document.getElementById('gameSteps').scrollTop = document.getElementById('gameSteps').scrollHeight;
+    }
+
+    function getEvaluation() {
+        // Получаем оценку позиции от Stockfish
+        stockfish.postMessage('position fen ' + game.fen());
+        stockfish.postMessage('eval');
+
+        // Обрабатываем ответ от Stockfish
+        stockfish.onmessage = function (event) {
+            var match = event.data.match(/Total Evaluation: ([0-9.-]+)/);
+
+            if (match && match[1]) {
+                var evaluation = parseFloat(match[1]);
+                document.getElementById('evaluationValue').innerText = evaluation;
+            }
+        };
+    }
+
+</script>
+{% endblock content %}

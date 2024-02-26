@@ -11,18 +11,17 @@
 
 {% block content %}
 <div class="content" id="content">
-
     <div class="chess-board-wrapper">
-        <div id="myBoard" class="chess-board"></div>
+        <div class="chess-board" id="chessBoard"></div>
     </div>
-
-    <div class="menu-wrapper" id="rooms-wrapper">
-        <div class="title">Unleash <span style="color: rgb(119, 153, 84);">Y</span>our Inner Grandmaster with
+    <div class="menu">
+        <div class="menu__title">Unleash <span style="color: rgb(119, 153, 84);">Y</span>our Inner Grandmaster
+            with
             <span style="color: rgb(52, 98, 160);">C</span>hess<span style="color: rgb(239, 104, 80);">H</span>ab!<img
                 src="{% static '/game/img/chesspieces/wikipedia/wP.png' %}" class="wP" alt="">
         </div>
-        <button id="play-online" class="menu-button online-button">Play Online</button>
-        <button id="play-computer" class="menu-button">Play Computer</button>
+        <button class="menu__button menu__button_red" id="playOnlineButton">Play Online</button>
+        <button class="menu__button" id="playComputerButton">Play Computer</button>
     </div>
 
 </div>
@@ -31,11 +30,16 @@
 <script src="{% static 'game/js/chessboard-1.0.0.min.js' %}"></script>
 <script>
 
-    var b1 = document.getElementById('play-online');
+    var b1 = document.getElementById('playOnlineButton');
     b1.addEventListener('click', function () {
         // Осуществляем переход на другую страницу
         window.location.href = "{% url 'game-list' %}"
     });
+
+    var b2 = document.getElementById('playComputerButton');
+    b2.addEventListener('click', function () {
+        window.location.href = "{% url 'game-computer' %}"
+    })
 
     var board = null
     var game = new Chess()
@@ -44,11 +48,11 @@
     var flipped = false;
 
     function removeGreySquares() {
-        $('#myBoard .square-55d63').css('background', '')
+        $('#chessBoard .square-55d63').css('background', '')
     }
 
     function greySquare(square) {
-        var $square = $('#myBoard .square-' + square)
+        var $square = $('#chessBoard .square-' + square)
 
         var background = whiteSquareGrey
         if ($square.hasClass('black-3c85d')) {
@@ -76,7 +80,7 @@
     }
 
     function highlightSquare(square, color) {
-        var squareEl = $('#myBoard .square-' + square);
+        var squareEl = $('#chessBoard .square-' + square);
 
         // Ваш код для изменения цвета подсветки
         squareEl.css('swadow-color', color);
@@ -148,12 +152,12 @@
         onSnapEnd: onSnapEnd,
     };
 
-    var board = Chessboard('myBoard', config);
+    var board = Chessboard('chessBoard', config);
 
     var currentFEN = '';
 
     var createChessboard = function (fen) {
-        return Chessboard('myBoard', {
+        return Chessboard('chessBoard', {
             ...config,
             position: fen || 'start' // Используем переданный FEN или 'start', если FEN не предоставлен
         });

@@ -14,6 +14,7 @@ class ChessGame(models.Model):
     is_white_move = models.BooleanField(default=True)
     
     is_public = models.BooleanField(default=True)
+    
     is_started = models.BooleanField(default=False)
     is_finished = models.BooleanField(default=False)
     

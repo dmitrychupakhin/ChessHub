@@ -3,7 +3,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr;
-    grid-template-areas: "board game-info" ;
+    grid-template-areas: "board game-info";
     grid-gap: 20px;
     font-size: 40px;
     height: 100%;
@@ -43,6 +43,7 @@
         align-items: center;
         justify-content: center;
     }
+
     .display-wrapper {
         border-radius: 4px;
         color: rgb(248, 238, 225);
@@ -57,136 +58,102 @@
     }
 }
 
-.timer-top, .timer-bottom {
+.timer-top,
+.timer-bottom {
     background: linear-gradient(to right, rgb(239, 104, 80), rgb(220, 82, 58));
-    box-shadow: 3px 3px 0px rgb(183, 101, 54);
-    padding: 7px;
-    border-radius: 4px;
+    box-shadow: 4px 4px 0px rgb(183, 101, 54);
+    padding: 10px;
+    border-radius: 10px;
     width: max-content;
     justify-self: end;
     font-size: 30px;
     color: rgb(248, 238, 225);
-    font-weight: 600;
 }
 
 .username-top,
 .username-bottom {
-    font-weight: 600;
-    background: linear-gradient(to bottom right, rgb(102, 149, 210), rgb(68, 116, 177));
-        box-shadow: 3px 3px 0px rgb(57, 97, 151);
-    padding: 7px;
-    border-radius: 4px;
+    background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
+    box-shadow: 4px 4px 0px rgb(35, 68, 110);
+    padding: 10px;
+    border-radius: 10px;
     width: max-content;
     justify-self: start;
     font-size: 30px;
     color: rgb(248, 238, 225);
 }
 
-.board-top, .board-bottom {
+.board-top,
+.board-bottom {
     display: grid;
     grid-template-columns: 1fr 1fr;
 }
 
-.board-top{
+.board-top {
     grid-area: board-top;
 }
 
-.board-bottom{
+.board-bottom {
     grid-area: board-bottom;
 }
 
-.chat{
+.chat {
     display: grid;
     grid-template-rows: 1fr 0fr;
     padding: 5px;
     grid-area: chat;
     border-radius: 4px;
-    background: linear-gradient(to right, rgb(239, 104, 80), rgb(220, 82, 58));
-    box-shadow: 3px 3px 0px rgb(183, 101, 54);
-    overflow: hidden;
+    box-shadow: 4px 4px 0px rgb(87, 114, 61);
+    background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
 }
 
-.chat-form{
+.chat-form {
     display: grid;
     grid-template-columns: 1fr 0fr;
     gap: 20px;
 }
 
-.chat-button{
-    background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
-    box-shadow: 3px 3px 0px rgb(81, 110, 52);
+.chat-button {
+    background: linear-gradient(to right, rgb(239, 104, 80), rgb(220, 82, 58));
+    box-shadow: 4px 4px 0px rgb(183, 101, 54);
     font-size: 20px;
     color: rgb(248, 238, 225);
     border-radius: 10px;
     padding: 5px 20px;
-    font-weight: 700;
 }
 
-.chat-input{
+.chat-input {
     font-size: 20px;
     color: rgb(248, 238, 225);
-    background: transparent;
+    background-color: rgb(89, 123, 55);
     border-radius: 4px;
     padding: 5px;
-        background: linear-gradient(to right, rgb(202, 85, 64), rgb(204, 70, 47));
 }
 
-.messages{
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    overflow: auto;
-}
-
-.message{
-    display: grid;
-    grid-template-columns: 0fr 1fr;
-    gap: 5px;
-    padding: 5px;
-    
-}
-
-.message-user{
-    font-weight: 500;
-}
-
-.message-text{
-    
-}
-
-.display-wrapper{
+.display-wrapper {
     border-radius: 4px;
     color: rgb(248, 238, 225);
     display: grid;
     aspect-ratio: 1;
     font-size: 20px;
     grid-template-columns: 1fr;
-    grid-template-rows: 3fr 0fr 0fr 2fr;
-    grid-template-areas: "game-info" "evaluation" "buttons" "chat";
+    grid-template-rows: 0fr 0fr 1fr 0fr;
+    grid-template-areas: "range" "evaluation" "game-info" "buttons";
     grid-area: game-info;
     grid-gap: 20px;
 }
 
-.evaluation{
+.evaluation {
     grid-area: evaluation;
     display: grid;
     grid-template-columns: 0fr 1fr;
     font-weight: 900;
     font-size: 30px;
-    color: rgb(57, 56, 53);
-    border: 2px solid rgb(57, 56, 53);
-    padding: 5px;
+
 }
 
 .highlight1-32417,
 .highlight2-9c5d2 {
     box-shadow: inset 0 0 0px 3px rgb(248, 238, 225) !important;
-}
-
-.title {
-    font-size: 35px;
-    font-weight: 900;
-    margin-bottom: 10px;
 }
 
 #myBoard .board-b72b1 {
@@ -203,85 +170,90 @@
     background-color: rgb(248, 238, 225);
 }
 
-.chess-wrapper{
+.chess-wrapper {
     display: grid;
     grid-template-areas: "board-top" "board" "board-bottom";
     grid-gap: 10px;
 }
 
-.display-buttons{
-    background: linear-gradient(to bottom right, rgb(102, 149, 210), rgb(68, 116, 177));
-        box-shadow: 3px 3px 0px rgb(57, 97, 151);
+.display-buttons {
+    box-shadow: 4px 4px 0px rgb(183, 101, 54);
+    background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
     grid-area: buttons;
     padding: 10px;
     font-size: 20px;
 }
 
-.display-button{
-    background:transparent;
-    padding: 5px;
-    font-size: 25px;
-    font-weight: 900;
+.display-button {
+    background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
+    box-shadow: 4px 4px 0px rgb(35, 68, 110);
+    padding: 10px;
+    font-size: 20px;
     color: rgb(248, 238, 225);
     border-radius: 10px;
 }
 
-.evaluation_value{
+.evaluation_value {
     margin-left: 20px;
 }
 
-.game-steps-wrapper{
-    box-shadow: 3px 3px 0px rgb(87, 114, 61);
-        background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
+.game-steps {
+    background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
+    box-shadow: 4px 4px 0px rgb(35, 68, 110);
     border-radius: 4px;
     padding: 10px;
-    font-size: 20px;
-    font-weight: 900;
-    display: grid;
-    overflow: hidden;
-    grid-template-rows: 0fr 1fr;
-}
-
-.game-steps{
-    padding: 10px;
     overflow: auto;
+    font-size: 20px;
+    font-weight: 600;
 }
 
 /* Стилизация полосы прокрутки */
-::-webkit-scrollbar {
-    width: 5px;
+#gameSteps::-webkit-scrollbar {
+    width: 10px;
 }
 
-::-webkit-scrollbar-thumb {
-        background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
+#gameSteps::-webkit-scrollbar-thumb {
+    background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
     /* Цвет ползунка */
-    border-radius: 0px;
+    border-radius: 5px;
+    /* Закругление углов ползунка */
 }
 
-::-webkit-scrollbar-track {
-    background-color: rgb(87, 114, 61);
+#gameSteps::-webkit-scrollbar-track {
+    background-color: #eee;
     /* Цвет фона полосы прокрутки */
 }
 
-.step{
+.step {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
 }
 
 .chess-board-wrapper {
-    
+
     padding: 10px;
     border-radius: 4px;
     color: rgb(248, 238, 225);
     aspect-ratio: 1;
     background-color: rgb(255, 134, 113);
-    box-shadow: 3px 3px 0px rgb(183, 101, 54);
+    box-shadow: 4px 4px 0px rgb(183, 101, 54);
     background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
     grid-area: board;
 
 }
 
-.game-over-wrapper-title{
+.range{
+    grid-area: range;
+    display: grid;
+    gap: 20px;
+}
+
+.range__text{
+    font-size: 25px;
+    font-weight: 600;
+}
+
+.game-over-wrapper-title {
     text-align: center;
     font-size: 45px;
     color: rgb(248, 238, 225);
@@ -294,8 +266,8 @@
     font-size: 40px;
     color: rgb(248, 238, 225);
     font-weight: 700;
-        background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
-            box-shadow: 4px 4px 0px rgb(35, 68, 110);
+    background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
+    box-shadow: 4px 4px 0px rgb(35, 68, 110);
 }
 
 .rematch-button {
@@ -307,12 +279,12 @@
     background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
 }
 
-.game-over-wrapper{
+.game-over-wrapper {
     display: grid;
     gap: 20px;
-    box-shadow: 3px 3px 0px rgb(183, 101, 54);
+    box-shadow: 4px 4px 0px rgb(183, 101, 54);
     background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
-    
+
     padding: 10px;
     border-radius: 4px;
     font-size: 40px;
@@ -358,9 +330,4 @@
     100% {
         transform: rotate(360deg);
     }
-}
-
-.white-message, .black-message{
-    color: rgb(248, 238, 225);
-
 }

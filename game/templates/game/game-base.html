@@ -7,18 +7,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% block head %}
 <link type="text/css" href="{% static 'game/css/game-base.css' %}" rel="stylesheet">
-<title>Croco</title>
+<title>ChessHub</title>
 {% endblock head %}
 
 {% block wrapper %}
 <div class="header">
-    <a href="{% url 'game-home' %}" class="header-title">Chess<span class="hub">Hub</span></a>
-    <div class="user">
-        <!---->
-        <div class="username">
+    <a href="{% url 'game-home' %}" class="header__title">Chess<span class="hub">Hub</span></a>
+    <div class="header__user user">
+        <div class="user__username">
             {{ user.username }}
         </div>
-        <img class="user-image" src="{% static 'game/img/default_user_image.jpg' %}" alt="">
+        <img class="user__image" src="{% static 'game/img/default_user_image.jpg' %}" alt="">
     </div>
 </div>
 {% block content %}

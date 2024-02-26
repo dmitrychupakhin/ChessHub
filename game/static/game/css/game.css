@@ -135,7 +135,7 @@
     padding: 10px;
     display: flex;
     flex-direction: column;
-    overflow: auto;
+    overflow-y: auto;
 }
 
 .message{
@@ -146,12 +146,15 @@
     
 }
 
-.message-user{
-    font-weight: 500;
+.game-message{
+    display: flex;
+    justify-content: center;
+    font-size: 25px;
+    font-weight: 700;
 }
 
-.message-text{
-    
+.message-user{
+    font-weight: 500;
 }
 
 .display-wrapper{

@@ -11,6 +11,9 @@ class ChessGame(models.Model):
     white_rematch = models.BooleanField(default=False)
     black_rematch = models.BooleanField(default=False)
     
+    white_draw = models.DateTimeField(null=True, blank=True) 
+    black_draw = models.DateTimeField(null=True, blank=True) 
+    
     is_white_move = models.BooleanField(default=True)
     
     is_public = models.BooleanField(default=True)

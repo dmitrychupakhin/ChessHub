@@ -54,6 +54,12 @@ def time_over(game_id):
 
 class GameConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
+    def get_white_black_user(self, chess_game):
+        white_user = chess_game.white_user
+        black_user = chess_game.black_user
+        return white_user, black_user
+    
+    @database_sync_to_async
     def get_game_data(self, game_id):
         game = ChessGame.objects.get(id=game_id)
         
@@ -105,6 +111,60 @@ class GameConsumer(AsyncWebsocketConsumer):
                     'game_data': game_data,
                 })
             )
+        elif type == 'resign':
+            user = self.scope['user']
+            game_id = self.scope['url_route']['kwargs']['game_id']
+            game = await database_sync_to_async(ChessGame.objects.get)(id=game_id)
+            
+            game.is_finished = True
+            await database_sync_to_async(game.save)()
+            await time_over(game_id)
+            
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                    {
+                        'type': 'rematch',
+                        'white_rematch':  game.white_rematch,
+                        'black_rematch':  game.black_rematch,
+                    }
+            )
+            
+        elif type == 'draw':
+            user = self.scope['user']
+            game_id = self.scope['url_route']['kwargs']['game_id']
+            game = await database_sync_to_async(ChessGame.objects.get)(id=game_id)
+            white_user, black_user = await self.get_white_black_user(game)
+            if white_user == user:
+                game.white_draw = timezone.now()
+                message = 'Black player offers a draw'
+            elif black_user == user:
+                game.black_draw = timezone.now()
+                message = 'White player offers a draw'
+                    
+            await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'game_message',
+                        'message': message
+                    }
+                )
+            
+            if game.white_draw and game.black_draw:
+                if abs((game.white_draw - game.black_draw).total_seconds()) < 10:
+                    game.is_finished = True
+                    await database_sync_to_async(game.save)()
+                    await time_over(game_id)
+                    await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'rematch',
+                        'white_rematch':  game.white_rematch,
+                        'black_rematch':  game.black_rematch,
+                    }
+                )
+            
+            await database_sync_to_async(game.save)()
+            
         elif type == 'message':
             user = self.scope['user']
             message = data['message']
@@ -138,7 +198,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                     game.white_rematch = True
                 elif game_data['black_user'] == user.username:
                     game.black_rematch = True
-                    
+            else:
+                return      
+            
             await database_sync_to_async(game.save)()
             
             if game.white_rematch and game.black_rematch:
@@ -245,10 +307,16 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def rematch(self, event):
         event['type'] = 'rematch'
         await self.send(text_data=json.dumps(event))
-        
+    
+    async def game_message(self, event):
+        event['type'] = 'game-message'
+        await self.send(text_data=json.dumps(event))    
+
     async def message(self, event):
         event['type'] = 'message'
         await self.send(text_data=json.dumps(event))
+        
+
             
 
 class HomeConsumer(AsyncWebsocketConsumer):

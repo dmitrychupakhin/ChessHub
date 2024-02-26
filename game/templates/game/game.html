@@ -46,8 +46,8 @@
             <div class="evaluation_value" id="evaluationValue">0.00</div>
         </div>
         <div class="display-buttons">
-            <button class="display-button">Draw</button>
-            <button class="display-button">Resign</button>
+            <button class="display-button" id="drawButton">Draw</button>
+            <button class="display-button" id="resignButton">Resign</button>
         </div>
         <div class="chat">
             <div class="messages" id="messages">
@@ -64,6 +64,22 @@
 <script src="{% static 'game/js/chessboard-1.0.0.min.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish-nnue-16.min.js"></script>
 <script>
+
+    var resignButton = document.getElementById('resignButton');
+    resignButton.addEventListener('click', function () {
+        var data = {
+            type: 'resign',
+        };
+        socket.send(JSON.stringify(data));
+    });
+
+    var drawButton = document.getElementById('drawButton');
+    drawButton.addEventListener('click', function () {
+        var data = {
+            type: 'draw',
+        };
+        socket.send(JSON.stringify(data));
+    });
 
     var b1 = document.getElementById('homeButton');
     b1.addEventListener('click', function () {
@@ -131,6 +147,10 @@
 
             newMessage(message, user);
         }
+        else if (data.type === 'game-message') {
+            var message = data.message;
+            newGameMessage(message);
+        }
         else if (data.type === 'rematch') {
             if (data.game_id) {
                 window.location.replace(`/game/${data.game_id}/`);
@@ -173,6 +193,7 @@
         }
     }
     function gameOver(whiteRematch, blackRematch) {
+        clearInterval(timerInterval);
         var winner = game.turn() === 'w' ? 'Black' : 'White';
         document.getElementById('gameOverWrapper').style.display = 'grid';
         document.getElementById('gameOverTitleWrapper').innerText = "Game Over! " + winner + " wins!";
@@ -333,6 +354,22 @@
             updateTimerWhite();
         }
     }
+    function newGameMessage(message) {
+        var messageElement = document.createElement('div');
+        messageElement.classList.add('message');
+        messageElement.classList.add('game-message');
+
+        var messageText = document.createElement('div');
+        messageText.innerText = message;
+        messageText.classList.add('message-text');
+
+        messageElement.appendChild(messageText);
+
+        document.getElementById('messages').appendChild(messageElement);
+
+        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    }
+
 
     function newMessage(message, user) {
         var messageElement = document.createElement('div');

@@ -44,18 +44,6 @@
         justify-content: center;
     }
 
-    .display-wrapper {
-        border-radius: 4px;
-        color: rgb(248, 238, 225);
-        display: grid;
-        aspect-ratio: 1;
-        font-size: 20px;
-        grid-template-columns: 1fr;
-        grid-template-rows: 0fr 0fr 3fr 2fr !important;
-        grid-template-areas: "buttons" "evaluation" "game-info" "chat" !important;
-        grid-area: game-info;
-        grid-gap: 20px;
-    }
 }
 
 .timer-top,
@@ -71,15 +59,49 @@
 }
 
 .username-top,
-.username-bottom {
-    background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
-    box-shadow: 4px 4px 0px rgb(35, 68, 110);
+.username-bottom,
+.bot {
+    background: linear-gradient(to bottom right, rgb(102, 149, 210), rgb(68, 116, 177));
+    box-shadow: 3px 3px 0px rgb(57, 97, 151);
     padding: 10px;
     border-radius: 10px;
     width: max-content;
     justify-self: start;
     font-size: 30px;
     color: rgb(248, 238, 225);
+}
+
+.bot{
+    background: linear-gradient(to right, rgb(239, 104, 80), rgb(220, 82, 58));
+        box-shadow: 3px 3px 0px rgb(183, 101, 54);
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    margin-right: 15px;
+    height: 7px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 5px;
+    background-image: linear-gradient(rgb(248, 238, 225), rgb(232, 218, 200));
+    background-repeat: no-repeat;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: rgb(106, 137, 75);
+    cursor: ew-resize;
+    box-shadow: 0 0 2px 0 #555;
+    transition: background .3s ease-in-out;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    -webkit-appearance: none;
+    box-shadow: none;
+    border: none;
+    background: transparent;
 }
 
 .board-top,
@@ -90,6 +112,9 @@
 
 .board-top {
     grid-area: board-top;
+    display: grid;
+    grid-template-columns: 0fr 1fr;
+    gap: 20px;
 }
 
 .board-bottom {
@@ -148,7 +173,9 @@
     grid-template-columns: 0fr 1fr;
     font-weight: 900;
     font-size: 30px;
-
+    color: rgb(57, 56, 53);
+    border: 2px solid rgb(57, 56, 53);
+    padding: 5px;
 }
 
 .highlight1-32417,
@@ -177,18 +204,18 @@
 }
 
 .display-buttons {
-    box-shadow: 4px 4px 0px rgb(183, 101, 54);
-    background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
+    background: linear-gradient(to bottom right, rgb(102, 149, 210), rgb(68, 116, 177));
+    box-shadow: 3px 3px 0px rgb(57, 97, 151);
     grid-area: buttons;
     padding: 10px;
     font-size: 20px;
 }
 
 .display-button {
-    background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
-    box-shadow: 4px 4px 0px rgb(35, 68, 110);
-    padding: 10px;
-    font-size: 20px;
+    background: transparent;
+    padding: 5px;
+    font-size: 25px;
+    font-weight: 900;
     color: rgb(248, 238, 225);
     border-radius: 10px;
 }
@@ -197,30 +224,42 @@
     margin-left: 20px;
 }
 
-.game-steps {
-    background: linear-gradient(to bottom right, rgb(71, 121, 185), rgb(45, 93, 156));
-    box-shadow: 4px 4px 0px rgb(35, 68, 110);
+.title {
+    font-size: 35px;
+    font-weight: 900;
+    margin-bottom: 10px;
+}
+
+.game-steps-wrapper {
+    box-shadow: 3px 3px 0px rgb(87, 114, 61);
+    background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
     border-radius: 4px;
     padding: 10px;
-    overflow: auto;
     font-size: 20px;
-    font-weight: 600;
+    font-weight: 900;
+    display: grid;
+    overflow: hidden;
+    grid-template-rows: 0fr 1fr;
+}
+
+.game-steps {
+    padding: 10px;
+    overflow: auto;
 }
 
 /* Стилизация полосы прокрутки */
-#gameSteps::-webkit-scrollbar {
-    width: 10px;
+::-webkit-scrollbar {
+    width: 5px;
 }
 
-#gameSteps::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
     background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
     /* Цвет ползунка */
-    border-radius: 5px;
-    /* Закругление углов ползунка */
+    border-radius: 0px;
 }
 
-#gameSteps::-webkit-scrollbar-track {
-    background-color: #eee;
+::-webkit-scrollbar-track {
+    background-color: rgb(87, 114, 61);
     /* Цвет фона полосы прокрутки */
 }
 
@@ -236,7 +275,7 @@
     color: rgb(248, 238, 225);
     aspect-ratio: 1;
     background-color: rgb(255, 134, 113);
-    box-shadow: 4px 4px 0px rgb(183, 101, 54);
+    box-shadow: 3px 3px 0px rgb(183, 101, 54);
     background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
     grid-area: board;
 

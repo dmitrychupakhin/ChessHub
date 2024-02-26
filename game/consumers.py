@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import json
+from django.core.serializers.json import DjangoJSONEncoder
 from channels.generic.websocket import AsyncWebsocketConsumer
 import chess
 import chess.pgn
@@ -11,6 +12,66 @@ from django.db.models import Q
 import random
 from io import StringIO
 from datetime import timedelta
+
+class GameConnectConsumer(AsyncWebsocketConsumer):
+    @database_sync_to_async
+    def get_white_user(self, game):
+        return game.white_user
+    @database_sync_to_async
+    def start_game_random(self, chess_game):
+        white_user = chess_game.white_user
+        black_user = chess_game.black_user
+        
+        if random.choice([True, False]):
+            chess_game.white_user = black_user
+            chess_game.black_user = white_user
+            chess_game.save()
+            
+    async def connect(self):
+        self.room_group_name = self.scope['url_route']['kwargs']['link']
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+        await self.accept()
+        
+        user = self.scope['user']
+        
+        game = await database_sync_to_async(ChessGame.objects.get)(unique_link=self.room_group_name, is_started=False)
+        
+        white_user = await self.get_white_user(game)
+        
+        if user != white_user:
+            game.black_user = user
+            game.is_started = True
+            game.start_time=timezone.now()
+            game.last_move_time = game.start_time
+            game.white_user_end_time = game.start_time + game.total_game_time
+            game.black_user_end_time = game.start_time + game.total_game_time
+            await database_sync_to_async(game.save)()
+            await self.start_game_random(game)
+        
+            await self.channel_layer.group_send(
+                    self.room_group_name,
+                        {
+                            'type': 'start_game',
+                            'game_id':  game.pk,
+                        }
+                )
+              
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+        
+        game = await database_sync_to_async(ChessGame.objects.get)(unique_link=self.room_group_name, is_started=False)
+        if game.is_started == False:
+            await database_sync_to_async(game.delete)()
+    
+    async def start_game(self, event):
+        event['type'] = 'start-game'
+        await self.send(text_data=json.dumps(event))
 
 def serialize_datetime(obj):
     if isinstance(obj, (timezone.datetime,)):
@@ -95,7 +156,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        print(data)
+
         type = data['type']
         
         if type == 'game-data':
@@ -399,7 +460,7 @@ class HomeConsumer(AsyncWebsocketConsumer):
                 'game_id': current_game.pk,
                 'is_started': current_game.is_started,
                 'white_user': current_game.white_user.username if current_game.white_user else None,
-                'black_user': current_game.black_user.username if current_game.black_user else None
+                'black_user': current_game.black_user.username if current_game.black_user else None,
             }
             for current_game in current_games
         ]
@@ -435,7 +496,8 @@ class HomeConsumer(AsyncWebsocketConsumer):
                         'type': 'new-game',
                         'game_id': chess_game.pk,
                         'white_user': user.username,
-                    })
+                        'link': chess_game.unique_link,
+                    }, cls=DjangoJSONEncoder)
                 )
                 return
             await self.channel_layer.group_send(

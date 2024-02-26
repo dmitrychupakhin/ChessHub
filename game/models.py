@@ -1,5 +1,6 @@
 from django.db import models
 from account.models import User
+import uuid
 
 class ChessGame(models.Model):
     fen = models.TextField(default='')
@@ -32,3 +33,5 @@ class ChessGame(models.Model):
 
     white_user_remaining_time = models.DurationField(null=True, blank=True)  
     black_user_remaining_time = models.DurationField(null=True, blank=True)  
+    
+    unique_link = models.CharField(max_length=36, default=uuid.uuid4, unique=True, editable=False)

@@ -1,0 +1,72 @@
+{% extends "game/game-base.html" %}
+{% load static %}
+
+{% block head %}
+<link type="text/css" href="{% static 'game/css/game-base.css' %}" rel="stylesheet">
+<link type="text/css" href="{% static 'game/css/game-connect.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
+    integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous">
+<title>ChessHub</title>
+{% endblock head %}
+
+{% block content %}
+<div class="content" id="content">
+    <div class="data-wrapper">
+        <div class="title">To invite someone to play, give this URL:</div>
+        <div class="link" id="link" onclick="copyContent()">{{ request.build_absolute_uri }}</div>
+    </div>
+</div>
+<script src="{% static 'game/js/chess.js' %}"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="{% static 'game/js/chessboard-1.0.0.min.js' %}"></script>
+<script>
+    const socket = new WebSocket(`ws://${window.location.host}/ws/game-connect/{{ link }}/`);
+
+    socket.onopen = (event) => {
+        console.log('WebSocket connection opened:', event);
+    };
+
+    socket.onmessage = (event) => {
+        console.log(event.data);
+        var data = JSON.parse(event.data);
+        if (data.type === 'start-game') {
+            window.location.replace(`/game/${data.game_id}/`);
+        }
+    }
+    socket.onclose = function (event) {
+        console.log('WebSocket connection closed:', event);
+    };
+
+
+    function copyContent() {
+        // Получаем ссылку на div
+        var divContent = document.getElementById('link');
+        var range = document.createRange();
+        range.selectNode(divContent);
+
+        // Создаем объект Selection
+        var selection = window.getSelection();
+
+        // Очищаем текущий Selection и добавляем новый Range
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        // Копируем выделенный текст в буфер обмена
+        document.execCommand('copy');
+
+        // Сбрасываем выделение
+        selection.removeAllRanges();
+
+        // Визуальное подтверждение, например, изменение стиля div
+        divContent.innerText = 'Copy!';
+        divContent.style.background = "linear-gradient(to right, rgb(223, 107, 86), rgb(202, 96, 77))";
+        divContent.style.boxShadow = "3px 3px 0px rgb(180, 86, 69)";
+        // Можете добавить код для отмены визуального подтверждения через некоторое время
+        setTimeout(function () {
+            divContent.innerText = '{{ request.build_absolute_uri }}';
+            divContent.style.background = "linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63))";
+            divContent.style.boxShadow = "3px 3px 0px rgb(87, 114, 61)";
+        }, 1000);
+    }
+</script>
+{% endblock content %}

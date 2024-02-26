@@ -87,7 +87,11 @@
             }
         }
         else if (data.type === 'new-game') {
-            if (data.white_user == '{{ user.username }}') {
+            if (data.link) {
+                window.location.replace(`/game-connect/${data.link}/`);
+
+            }
+            else if (data.white_user == '{{ user.username }}') {
                 document.getElementById('currentRoomWrapper').style.display = 'grid';
                 document.getElementById('newRoomWrapper').style.display = 'none';
             }
@@ -119,7 +123,7 @@
         location.reload();
     };
 
-    function newRoom(roomId, isStarted, isOwner) {
+    function newRoom(roomId, isStarted, isOwner,) {
         var roomElement = document.createElement('div');
         roomElement.classList.add('room');
         roomElement.id = roomId;

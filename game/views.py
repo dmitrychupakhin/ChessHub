@@ -19,3 +19,11 @@ class GameView(TemplateView):
 class GameComputerView(TemplateView):
     template_name = 'game/game-computer.html'
     
+class GameConnectView(TemplateView):
+    template_name = 'game/game-connect.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        link = self.kwargs.get('link')
+        context['link'] = link
+        return context

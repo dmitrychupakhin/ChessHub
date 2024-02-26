@@ -132,7 +132,7 @@ input[type="radio"]:checked+label {
 
 .rooms-wrapper {
     box-shadow: 3px 3px 0px rgb(87, 114, 61);
-        background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
+    background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
     grid-area: rooms;
     display: grid;
     grid-template-rows: 0fr 1fr;

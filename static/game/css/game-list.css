@@ -1,0 +1,304 @@
+.content {
+    font-family: 'Open Sans', sans-serif;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    grid-template-areas: "board display";
+    grid-gap: 20px;
+    font-size: 40px;
+    height: 100%;
+    padding: 0% 12%;
+    overflow: auto;
+    align-items: center;
+    justify-content: center;
+}
+
+@media only screen and (max-width: 1500px) {
+    .content {
+            font-family: 'Open Sans', sans-serif;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr;
+            grid-template-areas: "board display";
+            grid-gap: 20px;
+            font-size: 40px;
+            height: 100%;
+            padding: 0% 5%;
+            overflow: auto;
+            align-items: center;
+            justify-content: center;
+        }
+}
+
+@media only screen and (max-width: 900px) {
+.content {
+        font-family: 'Open Sans', sans-serif;
+        display: grid;
+        grid-template-columns: 1fr ;
+        grid-template-rows: 1fr 1fr;
+        grid-template-areas: "display" "board";
+        grid-gap: 20px;
+        font-size: 40px;
+        height: 100%;
+        padding: 3% 5%;
+        overflow: auto;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    margin-right: 15px;
+    height: 7px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 5px;
+    background-image: linear-gradient(rgb(248, 238, 225), rgb(232, 218, 200));
+    background-repeat: no-repeat;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: rgb(106, 137, 75);
+    cursor: ew-resize;
+    box-shadow: 0 0 2px 0 #555;
+    transition: background .3s ease-in-out;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    -webkit-appearance: none;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+}
+
+input[type="radio"] {
+    display: none;
+}
+
+/* Стили для неотмеченного radio button, когда метка активирована */
+input[type="radio"]+label {
+    color: #333;
+    margin-right: 20px;
+    padding: 2px;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+/* Стили для отмеченного radio button */
+input[type="radio"]:checked+label {
+    color: #fff;
+    background-color: rgb(119, 151, 87);
+    box-shadow: 4px 4px 0px rgb(87, 114, 61);
+    border-radius: 4px;
+}
+.value{
+    font-size: 25px;
+    font-weight: 600;
+}
+
+.current-room-wrapper,
+.rooms-wrapper,
+.new-room-wrapper,
+.chess-board-wrapper {
+    font-weight: 500;
+    padding: 10px;
+    border-radius: 4px;
+    color: rgb(248, 238, 225);
+    margin-bottom: 20px;
+}
+
+.display-wrapper{
+    display: grid;
+    grid-area: display;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas: "current-rooms" "new-room" "rooms";
+    aspect-ratio: 1;
+}
+
+.current-room-wrapper {
+    display: none;
+    grid-area: current-rooms;
+    box-shadow: 3px 3px 0px rgb(87, 114, 61);
+        background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
+    display: none;
+    flex-direction: column;
+    border-radius: 0px;
+}
+
+.rooms-wrapper {
+    box-shadow: 3px 3px 0px rgb(87, 114, 61);
+    background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
+    grid-area: rooms;
+    display: grid;
+    grid-template-rows: 0fr 1fr;
+    margin-bottom: 0px;
+    align-self: start;
+    height: 100%;
+}
+
+.room {
+    background: linear-gradient(to right, rgb(223, 107, 86), rgb(202, 96, 77));
+    box-shadow: 3px 3px 0px rgb(180, 86, 69);
+    border-radius: 4px;
+    display: grid;
+    grid-template-columns: 1fr 0fr;
+    grid-template-areas: "room-title room-button";
+    align-items: center;
+    font-size: 30px;
+    font-weight: 700;
+    height: max-content;
+    padding:3px 10px;
+}
+
+.room_current{
+
+}
+
+.room-title {
+    grid-area: room-title;
+}
+
+.room-user-images {
+    grid-area: room-images;
+}
+
+.room-button {
+    grid-area: room-button;
+}
+
+.owner-button {
+    grid-area: owner-button;
+}
+
+.room-button,
+.owner-button {
+    font-size: 25px;
+    border-radius: 10px;
+    color: rgb(248, 238, 225);
+    font-weight: 900;
+    background: transparent;
+    padding: 10px 15px;
+}
+
+.room-input {
+    font-size: 20px;
+}
+
+.new-room-wrapper {
+    background: linear-gradient(to right, rgb(223, 107, 86), rgb(202, 96, 77));
+    box-shadow: 3px 3px 0px rgb(180, 86, 69);
+    grid-area: new-room;
+    display: none;
+    flex-direction: column;
+    border-radius: 0px;
+    gap: 5px;
+}
+
+.title {
+    font-size: 35px;
+    font-weight: 900;
+    margin-bottom: 10px;
+}
+
+.game-time,
+.step-time {
+    font-size: 25px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.step-time {
+    font-size: 20px;
+}
+
+.new-room-wrapper__range {
+    margin-bottom: 10px;
+}
+
+.user-limits {
+    font-size: 25px;
+    margin-bottom: 10px;
+}
+
+.new-room-button {
+    font-size: 25px;
+        border-radius: 4px;
+        color: rgb(248, 238, 225);
+        font-weight: 800;
+        background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(111, 150, 72));
+        box-shadow: 3px 3px 0px rgb(87, 113, 61);
+        padding: 10px;
+}
+
+#chessBoard .board-b72b1 {
+    border: none;
+    margin: auto;
+}
+
+#chessBoard .black-3c85d {
+    background-color: rgb(52, 98, 160);
+    background: linear-gradient(to bottom right, rgb(119, 153, 84), rgb(97, 132, 63));
+}
+
+#chessBoard .white-1e1d7 {
+    background-color: rgb(248, 238, 225);
+}
+
+.chess-board-wrapper {
+    padding: 10px;
+    border-radius: 4px;
+    color: rgb(248, 238, 225);
+    aspect-ratio: 1;
+    background-color: rgb(255, 134, 113);
+    box-shadow: 3px 3px 0px rgb(110, 121, 171);
+    background: linear-gradient(to right, rgb(169, 180, 227), rgb(131, 144, 200));
+    display: grid;
+    grid-area: board;
+    margin-bottom: 0px;
+}
+
+.highlight1-32417,
+.highlight2-9c5d2 {
+    box-shadow: inset 0 0 0px 3px rgb(248, 238, 225) !important;
+}
+
+
+.loading-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, rgb(251, 176, 76), rgb(226, 154, 60));
+    /* Цвет фона с небольшой прозрачностью */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    /* Поместите поверх всего остального контента */
+}
+
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

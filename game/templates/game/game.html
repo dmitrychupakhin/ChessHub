@@ -22,7 +22,7 @@
 <div class="loading-container" id="loadingContainer">
     <div class="loading-spinner"></div>
 </div>
-<div class="content">
+<div class="content" id="content">
     <div class="chess-wrapper">
         <div class="board-top">
             <div class="username-top" id="username-top">user</div>
@@ -164,7 +164,35 @@
             var isWhiteMove = data.is_white_move;
             initTimer(endTimeWhite, endTimeBlack, lastMoveTime, isWhiteUser, isWhiteMove);
             if (data.user !== '{{ user.username }}') {
-                game.move(data.move);
+                var move = game.move(data.move);
+                board.position(game.fen());
+                var $board = $('#myBoard');
+                $board.find('.square-55d63').removeClass('highlight-move1');
+                $board.find('.square-55d63').removeClass('highlight-move2');
+                $board.find('.square-55d63').removeClass('highlight-check');
+                var $element = $board.find('.square-' + move.from);
+                if ($element.hasClass('black-3c85d')) {
+                    $element.addClass('highlight-move2');
+                } else {
+                    $element.addClass('highlight-move1');
+                }
+                var $element = $board.find('.square-' + move.to);
+                if ($element.hasClass('black-3c85d')) {
+                    $element.addClass('highlight-move2');
+                } else {
+                    $element.addClass('highlight-move1');
+                }
+                if (game.in_check()) {
+                    var sideInCheck = game.turn();
+                    if (sideInCheck === 'w') {
+                        var el = $('img[data-piece="wK"]').first();
+                        el.closest('div').addClass('highlight-check');
+                    } else if (sideInCheck === 'b') {
+                        var el = $('img[data-piece="bK"]').first();
+                        el.closest('div').addClass('highlight-check');
+                    }
+                }
+                removeGreySquares();
                 board.position(game.fen());
                 updateMoveList();
                 getEvaluation();
@@ -401,6 +429,7 @@
     var game = null;
     var whiteSquareGrey = '#a9a9a9';
     var blackSquareGrey = '#696969';
+    var currentSquare = null;
 
     function removeGreySquares() {
         $('#myBoard .square-55d63').css('background', '')
@@ -417,10 +446,79 @@
         $square.css('background', background)
     }
 
+    document.getElementById('content').addEventListener('click', function (event) {
+        if (event.target.classList.contains('square-55d63')) {
+            var square = $(event.target).data('square');
+        }
+        else if (event.target.classList.contains('piece-417db')) {
+            var square = $(event.target).parent().data('square');
+        }
+        else {
+            console.log("Кликнули не на доску.");
+            return;
+        }
+        if (currentSquare != square) {
+            var move = game.move({
+                from: currentSquare,
+                to: square,
+                promotion: 'q' // NOTE: always promote to a queen for example simplicity
+            })
+            if (move === null) return 'snapback'
+            board.position(game.fen());
+            var $board = $('#myBoard');
+            $board.find('.square-55d63').removeClass('highlight-move1');
+            $board.find('.square-55d63').removeClass('highlight-move2');
+            $board.find('.square-55d63').removeClass('highlight-check');
+            var $element = $board.find('.square-' + move.from);
+            if ($element.hasClass('black-3c85d')) {
+                $element.addClass('highlight-move2');
+            } else {
+                $element.addClass('highlight-move1');
+            }
+            var $element = $board.find('.square-' + move.to);
+            if ($element.hasClass('black-3c85d')) {
+                $element.addClass('highlight-move2');
+            } else {
+                $element.addClass('highlight-move1');
+            }
+            if (game.in_check()) {
+                var sideInCheck = game.turn();
+                if (sideInCheck === 'w') {
+                    var el = $('img[data-piece="wK"]').first();
+                    console.log(el);
+                    el.closest('div').addClass('highlight-check');
+                } else if (sideInCheck === 'b') {
+                    var el = $('img[data-piece="bK"]').first();
+                    console.log(el);
+                    el.closest('div').addClass('highlight-check');
+                }
+            }
+            removeGreySquares();
+            currentSquare = null;
+            clearInterval(timerInterval);
+            const history = game.history();
+            var move = history[history.length - 1];
+            var gamePGN = game.pgn(true);
+            var moves = gamePGN.split(' ');
+            updateMoveList();
+            var data = {
+                type: 'move',
+                move: move,
+                gamePGN: gamePGN
+            };
+            socket.send(JSON.stringify(data));
+            setTimeout(function () {
+                // Check if the game is over (checkmate)
+                if (game.in_checkmate()) {
+                    gameOver();
+                }
+                getEvaluation();
+            }, 150);
+        }
+    });
 
     function onDragStart(source, piece) {
-
-        // do not pick up pieces if the game is over
+        removeGreySquares()
         if (game.game_over()) return false
 
         if (isWhiteUser && game.turn() === 'b') {
@@ -435,68 +533,18 @@
             (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
             return false
         }
-    }
-
-    function onDrop(source, target) {
-        removeGreySquares()
-        // see if the move is legal
-        var move = game.move({
-            from: source,
-            to: target,
-            promotion: 'q' // NOTE: always promote to a queen for example simplicity
-        })
-
-        // illegal move
-        if (move === null) return 'snapback'
-
-        setTimeout(function () {
-            // Check if the game is over (checkmate)
-            if (game.in_checkmate()) {
-                gameOver();
-            }
-            getEvaluation();
-        }, 150);
-    }
-
-    function onMouseoverSquare(square, piece) {
-
-        // get list of possible moves for this square
+        currentSquare = source;
         var moves = game.moves({
-            square: square,
+            square: source,
             verbose: true
         })
-        // exit if there are no moves available for this square
         if (moves.length === 0) return
-        // highlight the square they moused over
-        greySquare(square)
-
-        // highlight the possible squares for this piece
+        greySquare(source)
         for (var i = 0; i < moves.length; i++) {
             greySquare(moves[i].to)
         }
-
+        return false;
     }
-
-    function onMouseoutSquare(square, piece) {
-        removeGreySquares()
-    }
-
-    function onSnapEnd() {
-        clearInterval(timerInterval);
-        board.position(game.fen())
-        const history = game.history();
-        var move = history[history.length - 1];
-        var gamePGN = game.pgn(true);
-        var moves = gamePGN.split(' ');
-        updateMoveList();
-        var data = {
-            type: 'move',
-            move: move,
-            gamePGN: gamePGN
-        };
-        socket.send(JSON.stringify(data));
-    }
-
 
     var config = {
         draggable: true,
@@ -505,10 +553,6 @@
         sparePieces: false,
         showNotation: true,
         onDragStart: onDragStart,
-        onDrop: onDrop,
-        onMouseoutSquare: onMouseoutSquare,
-        onMouseoverSquare: onMouseoverSquare,
-        onSnapEnd: onSnapEnd,
     };
 
     var board = Chessboard('myBoard', config);

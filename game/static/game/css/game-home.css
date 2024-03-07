@@ -79,6 +79,16 @@
     box-shadow: inset 0 0 0px 3px rgb(248, 238, 225) !important;
 }
 
+.highlight-move1 {
+    background: rgb(236, 238, 107) !important;
+}
+.highlight-move2 {
+    background: rgb(213, 215, 93) !important;
+}
+.highlight-check{
+    background: rgb(215, 97, 93) !important;
+}
+
 .wP{
     height: 50px;
     width: 50px;
@@ -134,4 +144,15 @@
     background: linear-gradient(to right, rgb(255, 134, 113), rgb(241, 121, 99));
     display: grid;
     grid-area: board;
+}
+
+.center-dot {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background-color: black;
+    border-radius: 50%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }

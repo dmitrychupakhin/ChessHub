@@ -30,4 +30,8 @@ class CustomLoginView(LoginView):
     
     def get_success_url(self):
         return reverse_lazy('game-home')
+    
+def logout_view(request):
+    logout(request)
+    return redirect('login')
 
